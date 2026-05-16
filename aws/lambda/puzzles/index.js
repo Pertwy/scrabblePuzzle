@@ -7,7 +7,12 @@ const {
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+function normalizeOrigin(origin) {
+  const value = (origin || '*').trim();
+  return value === '*' ? value : value.replace(/\/$/, '');
+}
+
+const ALLOWED_ORIGIN = normalizeOrigin(process.env.ALLOWED_ORIGIN);
 const EDIT_API_KEY = process.env.EDIT_API_KEY || '';
 const ALLOWED_PUZZLE_IDS = (process.env.ALLOWED_PUZZLE_IDS || '1,2,3')
   .split(',')

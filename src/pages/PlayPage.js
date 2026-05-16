@@ -38,7 +38,8 @@ function PlayPage() {
         )}
         {error && (
           <p className={`${appStyles.statusMessage} ${appStyles.statusError}`}>
-            Could not load puzzle. Check your connection and API settings.
+            {error.message ||
+              'Could not load puzzle. Check your connection and API settings.'}
           </p>
         )}
 

@@ -37,9 +37,16 @@ export async function loadPuzzle(puzzleId) {
     return loadPuzzleLocal(puzzleId);
   }
 
-  const response = await fetch(
-    `${getApiBase()}/puzzles/${encodeURIComponent(puzzleId)}`
-  );
+  let response;
+  try {
+    response = await fetch(
+      `${getApiBase()}/puzzles/${encodeURIComponent(puzzleId)}`
+    );
+  } catch {
+    throw new Error(
+      'Could not reach puzzle API (network or CORS). Check REACT_APP_PUZZLES_API_URL and AllowedOrigin on the API stack.'
+    );
+  }
 
   if (response.status === 404) {
     return null;

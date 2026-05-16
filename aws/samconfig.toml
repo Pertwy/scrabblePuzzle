@@ -7,7 +7,7 @@ s3_prefix = "scrabble-puzzles"
 region = "eu-west-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "AllowedOrigin=\"https://master.ddfup0xv0rhdf.amplifyapp.com/\""
+parameter_overrides = "AllowedOrigin=\"https://master.ddfup0xv0rhdf.amplifyapp.com\""
 image_repositories = []
 
 [default.global.parameters]
