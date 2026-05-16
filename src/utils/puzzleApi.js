@@ -3,11 +3,12 @@ import { validatePuzzleSetup } from './puzzleValidation';
 const LOCAL_PREFIX = 'scrabble-puzzle-';
 
 function getApiBase() {
-  return process.env.REACT_APP_PUZZLES_API_URL?.replace(/\/$/, '') || '';
+  const raw = process.env.REACT_APP_PUZZLES_API_URL?.trim() || '';
+  return raw.replace(/\/$/, '');
 }
 
 function getEditKey() {
-  return process.env.REACT_APP_PUZZLES_EDIT_KEY || '';
+  return process.env.REACT_APP_PUZZLES_EDIT_KEY?.trim() || '';
 }
 
 export function isCloudPuzzleStorageEnabled() {
