@@ -7,6 +7,8 @@ import { validatePlayGeometry } from '../../utils/playValidation';
 import { validateWord } from '../../utils/wordValidator';
 import { LETTER_VALUES } from '../../constants/scrabbleConstants';
 import { normalizeBoardFromStorage, normalizeHandFromStorage } from '../../utils/defaultPuzzle';
+import { submitLeaderboardEntry } from '../../utils/leaderboardApi';
+import LeaderboardModal from '../LeaderboardModal/LeaderboardModal';
 import styles from './ScrabbleGame.module.scss';
 
 function buildSerializableSetup(board, hand) {
@@ -38,8 +40,21 @@ function buildSerializableSetup(board, hand) {
  * @param {Array} props.initialBoard
  * @param {Array} props.initialHand
  * @param {(setup: { board: unknown, hand: unknown }) => void} [props.onSaveSetup] — edit mode: persist puzzle (replaces file download)
+ * @param {string} [props.puzzleId] — play mode: puzzle id for leaderboard
+ * @param {number | null} [props.highScore] — play mode: best score on this puzzle (word hidden)
+ * @param {boolean} [props.highScoreLoading]
+ * @param {() => void} [props.onLeaderboardUpdate] — called after a score is submitted
  */
-function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
+function ScrabbleGame({
+  mode,
+  initialBoard,
+  initialHand,
+  onSaveSetup,
+  puzzleId,
+  highScore = null,
+  highScoreLoading = false,
+  onLeaderboardUpdate,
+}) {
   const editMode = mode === 'edit';
 
   const [board, setBoard] = useState(() =>
@@ -55,6 +70,7 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [leaderboardModal, setLeaderboardModal] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleDragOver = useCallback(
@@ -272,10 +288,35 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
 
       if (validation.valid) {
         const finalScore = calculateTotalScore(board, newTilePositions);
-        setMessage({
-          type: 'success',
-          text: `Success! "${geometry.word}" is valid. Score: ${finalScore}`,
-        });
+        const playedWord = geometry.word.toUpperCase();
+
+        if (puzzleId) {
+          try {
+            const entries = await submitLeaderboardEntry(
+              puzzleId,
+              playedWord,
+              finalScore
+            );
+            setLeaderboardModal({
+              word: playedWord,
+              score: finalScore,
+              entries,
+            });
+            onLeaderboardUpdate?.();
+            setMessage({ type: '', text: '' });
+          } catch (lbError) {
+            console.error('Leaderboard error:', lbError);
+            setMessage({
+              type: 'success',
+              text: `Valid word! Score: ${finalScore} (leaderboard unavailable)`,
+            });
+          }
+        } else {
+          setMessage({
+            type: 'success',
+            text: `Success! "${playedWord}" is valid. Score: ${finalScore}`,
+          });
+        }
       } else {
         setMessage({
           type: 'error',
@@ -413,6 +454,16 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
         {editMode ? 'Edit Mode' : `Current Score: ${currentScore}`}
       </div>
 
+      {!editMode && puzzleId && (
+        <div className={styles.highScoreBanner}>
+          {highScoreLoading
+            ? 'Loading best score…'
+            : highScore != null
+              ? `Best score: ${highScore}`
+              : 'No scores yet — be the first!'}
+        </div>
+      )}
+
       {editMode && (
         <div className={styles.buttonGroup}>
           <button
@@ -493,6 +544,15 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
             Clear
           </button>
         </div>
+      )}
+
+      {leaderboardModal && (
+        <LeaderboardModal
+          word={leaderboardModal.word}
+          score={leaderboardModal.score}
+          entries={leaderboardModal.entries}
+          onClose={() => setLeaderboardModal(null)}
+        />
       )}
     </div>
   );

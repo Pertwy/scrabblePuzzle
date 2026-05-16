@@ -2,7 +2,7 @@ import { validatePuzzleSetup } from './puzzleValidation';
 
 const LOCAL_PREFIX = 'scrabble-puzzle-';
 
-function getApiBase() {
+export function getApiBase() {
   const raw = process.env.REACT_APP_PUZZLES_API_URL?.trim() || '';
   return raw.replace(/\/$/, '');
 }

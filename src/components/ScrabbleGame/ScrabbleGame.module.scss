@@ -10,11 +10,23 @@
   background-color: white;
   padding: 15px 30px;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   font-size: 1.2rem;
   font-weight: bold;
   color: #333;
+}
+
+.highScoreBanner {
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 24px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+  text-align: center;
 }
 
 .message {

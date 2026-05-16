@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import ScrabbleGame from '../components/ScrabbleGame/ScrabbleGame';
 import { usePuzzle } from '../hooks/usePuzzle';
+import { useLeaderboardHighScore } from '../hooks/useLeaderboardHighScore';
 import {
   DEFAULT_PUZZLE_ID,
   getAdjacentPuzzleId,
@@ -15,6 +16,11 @@ function PlayPage() {
   const { puzzleId: puzzleIdParam } = useParams();
   const puzzleId = parsePuzzleId(puzzleIdParam);
   const { puzzle, loading, error } = usePuzzle(puzzleId);
+  const {
+    highScore,
+    loading: highScoreLoading,
+    reload: reloadHighScore,
+  } = useLeaderboardHighScore(puzzleId);
 
   if (!puzzleId || !isPuzzleIdAllowed(puzzleId)) {
     return <Navigate to={`/${DEFAULT_PUZZLE_ID}`} replace />;
@@ -61,8 +67,12 @@ function PlayPage() {
               <ScrabbleGame
                 key={puzzleId}
                 mode="play"
+                puzzleId={puzzleId}
                 initialBoard={puzzle.board}
                 initialHand={puzzle.hand}
+                highScore={highScore}
+                highScoreLoading={highScoreLoading}
+                onLeaderboardUpdate={reloadHighScore}
               />
             </div>
 

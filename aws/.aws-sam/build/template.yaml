@@ -26,6 +26,33 @@ Resources:
       KeySchema:
       - AttributeName: puzzleId
         KeyType: HASH
+  LeaderboardTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-leaderboard
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: puzzleId
+        AttributeType: S
+      - AttributeName: word
+        AttributeType: S
+      - AttributeName: score
+        AttributeType: N
+      KeySchema:
+      - AttributeName: puzzleId
+        KeyType: HASH
+      - AttributeName: word
+        KeyType: RANGE
+      GlobalSecondaryIndexes:
+      - IndexName: ByScore
+        KeySchema:
+        - AttributeName: puzzleId
+          KeyType: HASH
+        - AttributeName: score
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
   PuzzlesApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -36,6 +63,7 @@ Resources:
         AllowMethods:
         - GET
         - PUT
+        - POST
         - OPTIONS
         AllowHeaders:
         - Content-Type
@@ -44,7 +72,7 @@ Resources:
   PuzzlesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Description: Load and save puzzle board/hand setups
+      Description: Puzzles and leaderboard API
       CodeUri: PuzzlesFunction
       Handler: index.handler
       Runtime: nodejs20.x
@@ -54,6 +82,8 @@ Resources:
         Variables:
           TABLE_NAME:
             Ref: PuzzlesTable
+          LEADERBOARD_TABLE_NAME:
+            Ref: LeaderboardTable
           ALLOWED_ORIGINS:
             Fn::Join:
             - ','
@@ -65,6 +95,9 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: PuzzlesTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: LeaderboardTable
       Events:
         GetPuzzle:
           Type: HttpApi
@@ -80,6 +113,27 @@ Resources:
               Ref: PuzzlesApi
             Path: /puzzles/{puzzleId}
             Method: PUT
+        GetLeaderboardHigh:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PuzzlesApi
+            Path: /puzzles/{puzzleId}/leaderboard/high
+            Method: GET
+        GetLeaderboard:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PuzzlesApi
+            Path: /puzzles/{puzzleId}/leaderboard
+            Method: GET
+        PostLeaderboard:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: PuzzlesApi
+            Path: /puzzles/{puzzleId}/leaderboard
+            Method: POST
     Metadata:
       SamResourceId: PuzzlesFunction
 Outputs:
@@ -91,3 +145,7 @@ Outputs:
     Description: DynamoDB table name (for seed script)
     Value:
       Ref: PuzzlesTable
+  LeaderboardTableName:
+    Description: DynamoDB leaderboard table name
+    Value:
+      Ref: LeaderboardTable

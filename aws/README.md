@@ -55,6 +55,11 @@ Until a puzzle exists in DynamoDB, the app shows the built-in default layout (sa
 |--------|------|-------------|
 | GET | `/puzzles/{id}` | Load puzzle `1`, `2`, or `3` (404 if not saved yet) |
 | PUT | `/puzzles/{id}` | Save board + hand JSON |
+| GET | `/puzzles/{id}/leaderboard/high` | Best score only (`{ highScore }`, no word) |
+| GET | `/puzzles/{id}/leaderboard` | Top 20 words (`{ entries: [{ word, score }] }`) |
+| POST | `/puzzles/{id}/leaderboard` | Submit `{ word, score }` after a valid play |
+
+After adding leaderboard routes, run `sam build && sam deploy` again.
 
 ## Local frontend without AWS
 
