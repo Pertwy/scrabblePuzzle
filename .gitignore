@@ -11,6 +11,9 @@
 # production
 /build
 
+# generated from sowpods on install/build
+/public/dictionary
+
 # misc
 .DS_Store
 .env.local

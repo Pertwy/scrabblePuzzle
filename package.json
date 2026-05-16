@@ -9,10 +9,16 @@
     "@testing-library/user-event": "^13.5.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-router-dom": "^6.30.3",
     "react-scripts": "5.0.1",
+    "sass": "^1.97.3",
+    "sowpods": "^1.1.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "postinstall": "node scripts/copy-dictionary.js",
+    "prestart": "node scripts/copy-dictionary.js",
+    "prebuild": "node scripts/copy-dictionary.js",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
