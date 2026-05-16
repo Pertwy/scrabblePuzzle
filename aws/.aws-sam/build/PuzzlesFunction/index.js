@@ -7,31 +7,67 @@ const {
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME;
-function normalizeOrigin(origin) {
-  const value = (origin || '*').trim();
-  return value === '*' ? value : value.replace(/\/$/, '');
-}
-
-const ALLOWED_ORIGIN = normalizeOrigin(process.env.ALLOWED_ORIGIN);
 const EDIT_API_KEY = process.env.EDIT_API_KEY || '';
 const ALLOWED_PUZZLE_IDS = (process.env.ALLOWED_PUZZLE_IDS || '1,2,3')
   .split(',')
   .map((id) => id.trim())
   .filter(Boolean);
 
-function corsHeaders() {
+/** Any Amplify branch for this app (master, main, PR previews, etc.). */
+const AMPLIFY_ORIGIN_SUFFIX = '.ddfup0xv0rhdf.amplifyapp.com';
+
+function normalizeOrigin(origin) {
+  const value = (origin || '').trim();
+  if (!value || value === '*') return value || '*';
+  return value.replace(/\/$/, '');
+}
+
+function parseAllowedOrigins() {
+  const raw = process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || '*';
+  return raw
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+}
+
+function resolveCorsOrigin(event) {
+  const allowed = parseAllowedOrigins();
+  if (allowed.includes('*')) {
+    return '*';
+  }
+
+  const requestOrigin = normalizeOrigin(
+    event.headers?.origin || event.headers?.Origin || ''
+  );
+
+  if (requestOrigin && allowed.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  if (
+    requestOrigin &&
+    requestOrigin.startsWith('https://') &&
+    requestOrigin.endsWith(AMPLIFY_ORIGIN_SUFFIX)
+  ) {
+    return requestOrigin;
+  }
+
+  return allowed[0] || '*';
+}
+
+function corsHeaders(event) {
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': resolveCorsOrigin(event),
     'Access-Control-Allow-Headers': 'Content-Type,X-Edit-Key',
     'Access-Control-Allow-Methods': 'GET,PUT,OPTIONS',
     'Content-Type': 'application/json',
   };
 }
 
-function jsonResponse(statusCode, body) {
+function jsonResponse(event, statusCode, body) {
   return {
     statusCode,
-    headers: corsHeaders(),
+    headers: corsHeaders(event),
     body: JSON.stringify(body),
   };
 }
@@ -63,12 +99,12 @@ exports.handler = async (event) => {
   const method = getHttpMethod(event);
 
   if (method === 'OPTIONS') {
-    return { statusCode: 204, headers: corsHeaders() };
+    return { statusCode: 204, headers: corsHeaders(event) };
   }
 
   const puzzleId = getPuzzleId(event);
   if (!puzzleId || !isAllowedPuzzleId(puzzleId)) {
-    return jsonResponse(404, { error: 'Unknown puzzle' });
+    return jsonResponse(event, 404, { error: 'Unknown puzzle' });
   }
 
   if (method === 'GET') {
@@ -80,10 +116,10 @@ exports.handler = async (event) => {
     );
 
     if (!result.Item) {
-      return jsonResponse(404, { error: 'Puzzle not found' });
+      return jsonResponse(event, 404, { error: 'Puzzle not found' });
     }
 
-    return jsonResponse(200, {
+    return jsonResponse(event, 200, {
       board: result.Item.board,
       hand: result.Item.hand,
     });
@@ -94,7 +130,7 @@ exports.handler = async (event) => {
       const provided =
         event.headers?.['x-edit-key'] || event.headers?.['X-Edit-Key'];
       if (provided !== EDIT_API_KEY) {
-        return jsonResponse(401, { error: 'Unauthorized' });
+        return jsonResponse(event, 401, { error: 'Unauthorized' });
       }
     }
 
@@ -102,11 +138,11 @@ exports.handler = async (event) => {
     try {
       body = JSON.parse(event.body || '{}');
     } catch {
-      return jsonResponse(400, { error: 'Invalid JSON body' });
+      return jsonResponse(event, 400, { error: 'Invalid JSON body' });
     }
 
     if (!validateSetup(body)) {
-      return jsonResponse(400, { error: 'Invalid puzzle setup' });
+      return jsonResponse(event, 400, { error: 'Invalid puzzle setup' });
     }
 
     await docClient.send(
@@ -121,8 +157,8 @@ exports.handler = async (event) => {
       })
     );
 
-    return jsonResponse(200, { ok: true });
+    return jsonResponse(event, 200, { ok: true });
   }
 
-  return jsonResponse(405, { error: 'Method not allowed' });
+  return jsonResponse(event, 405, { error: 'Method not allowed' });
 };

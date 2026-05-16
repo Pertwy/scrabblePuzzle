@@ -2,11 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: "Scrabble Best Pick \u2014 puzzle storage API"
 Parameters:
-  AllowedOrigin:
-    Type: String
+  AllowedOrigins:
+    Type: CommaDelimitedList
     Default: '*'
-    Description: CORS origin for browser requests (your Amplify URL, e.g. https://main.xxxxx.amplifyapp.com).
-      Use * only for testing.
+    Description: Comma-separated CORS origins (Amplify URLs, http://localhost:3000).
+      Use * to allow any origin (simplest for Amplify branch previews).
   EditApiKey:
     Type: String
     Default: ''
@@ -32,7 +32,7 @@ Resources:
       StageName: $default
       CorsConfiguration:
         AllowOrigins:
-        - Ref: AllowedOrigin
+          Ref: AllowedOrigins
         AllowMethods:
         - GET
         - PUT
@@ -54,8 +54,10 @@ Resources:
         Variables:
           TABLE_NAME:
             Ref: PuzzlesTable
-          ALLOWED_ORIGIN:
-            Ref: AllowedOrigin
+          ALLOWED_ORIGINS:
+            Fn::Join:
+            - ','
+            - Ref: AllowedOrigins
           EDIT_API_KEY:
             Ref: EditApiKey
           ALLOWED_PUZZLE_IDS: 1,2,3

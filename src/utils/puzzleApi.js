@@ -37,14 +37,13 @@ export async function loadPuzzle(puzzleId) {
     return loadPuzzleLocal(puzzleId);
   }
 
+  const url = `${getApiBase()}/puzzles/${encodeURIComponent(puzzleId)}`;
   let response;
   try {
-    response = await fetch(
-      `${getApiBase()}/puzzles/${encodeURIComponent(puzzleId)}`
-    );
+    response = await fetch(url);
   } catch {
     throw new Error(
-      'Could not reach puzzle API (network or CORS). Check REACT_APP_PUZZLES_API_URL and AllowedOrigin on the API stack.'
+      `Could not reach puzzle API at ${url} (network or CORS). In Amplify, set REACT_APP_PUZZLES_API_URL to your ApiEndpoint (no trailing slash) and redeploy.`
     );
   }
 
