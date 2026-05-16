@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Scrabble Best Pick — puzzle storage API
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: >-
+      CORS origin for browser requests (your Amplify URL, e.g.
+      https://main.xxxxx.amplifyapp.com). Use * only for testing.
+  EditApiKey:
+    Type: String
+    Default: ''
+    NoEcho: true
+    Description: >-
+      Optional secret required on PUT (X-Edit-Key header). Leave empty to
+      allow saves without a key (same openness as a public /edit page).
+
+Resources:
+  PuzzlesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-puzzles'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: puzzleId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: puzzleId
+          KeyType: HASH
+
+  PuzzlesApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowMethods:
+          - GET
+          - PUT
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Edit-Key
+        MaxAge: 600
+
+  PuzzlesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Load and save puzzle board/hand setups
+      CodeUri: lambda/puzzles/
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Timeout: 10
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref PuzzlesTable
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          EDIT_API_KEY: !Ref EditApiKey
+          ALLOWED_PUZZLE_IDS: '1,2,3'
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PuzzlesTable
+      Events:
+        GetPuzzle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles/{puzzleId}
+            Method: GET
+        PutPuzzle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles/{puzzleId}
+            Method: PUT
+
+Outputs:
+  ApiEndpoint:
+    Description: Base URL for REACT_APP_PUZZLES_API_URL (no trailing slash)
+    Value: !Sub 'https://${PuzzlesApi}.execute-api.${AWS::Region}.amazonaws.com'
+  PuzzlesTableName:
+    Description: DynamoDB table name (for seed script)
+    Value: !Ref PuzzlesTable

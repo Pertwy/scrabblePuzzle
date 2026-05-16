@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 
-test('renders Scrabble Best Pick header', () => {
+test('renders Scrabble Best Pick header', async () => {
   render(<App />);
-  const heading = screen.getByRole('heading', { name: /scrabble best pick/i });
-  expect(heading).toBeInTheDocument();
+  await waitFor(() => {
+    expect(
+      screen.getByRole('heading', { name: /scrabble best pick/i })
+    ).toBeInTheDocument();
+  });
 });

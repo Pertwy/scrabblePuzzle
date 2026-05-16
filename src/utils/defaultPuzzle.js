@@ -1,5 +1,5 @@
 import { LETTER_VALUES } from '../constants/scrabbleConstants';
-import { loadPuzzle } from './puzzleStorage';
+import { loadPuzzle } from './puzzleApi';
 
 export function createEmptyBoard() {
   return Array(15)
@@ -170,17 +170,25 @@ export function normalizeHandFromStorage(hand) {
   }));
 }
 
-/** Puzzle by id: saved layout or built-in default. */
-export function getPuzzle(puzzleId) {
-  const stored = loadPuzzle(puzzleId);
-  if (stored) {
-    return {
-      board: normalizeBoardFromStorage(stored.board),
-      hand: normalizeHandFromStorage(stored.hand),
-    };
-  }
+function puzzleFromStored(stored) {
+  return {
+    board: normalizeBoardFromStorage(stored.board),
+    hand: normalizeHandFromStorage(stored.hand),
+  };
+}
+
+function defaultPuzzle() {
   return {
     board: createDefaultBoard(),
     hand: createDefaultHand(),
   };
+}
+
+/** Puzzle by id: saved layout from API (or built-in default if none). */
+export async function fetchPuzzle(puzzleId) {
+  const stored = await loadPuzzle(puzzleId);
+  if (stored) {
+    return puzzleFromStored(stored);
+  }
+  return defaultPuzzle();
 }

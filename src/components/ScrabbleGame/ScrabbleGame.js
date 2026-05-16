@@ -54,6 +54,7 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
   const [currentScore, setCurrentScore] = useState(0);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDragOver = useCallback(
@@ -334,15 +335,26 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
     );
   }, []);
 
-  const handleSaveSetup = () => {
+  const handleSaveSetup = async () => {
     const setup = buildSerializableSetup(board, hand);
 
     if (onSaveSetup) {
-      onSaveSetup(setup);
-      setMessage({
-        type: 'success',
-        text: 'Puzzle saved.',
-      });
+      setIsSaving(true);
+      setMessage({ type: '', text: '' });
+      try {
+        await onSaveSetup(setup);
+        setMessage({
+          type: 'success',
+          text: 'Puzzle saved.',
+        });
+      } catch {
+        setMessage({
+          type: 'error',
+          text: 'Failed to save puzzle. Try again.',
+        });
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
 
@@ -407,8 +419,9 @@ function ScrabbleGame({ mode, initialBoard, initialHand, onSaveSetup }) {
             type="button"
             className={`${styles.button} ${styles.save}`}
             onClick={handleSaveSetup}
+            disabled={isSaving}
           >
-            Save puzzle
+            {isSaving ? 'Saving…' : 'Save puzzle'}
           </button>
           <button
             type="button"

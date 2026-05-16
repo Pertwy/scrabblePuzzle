@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import ScrabbleGame from '../components/ScrabbleGame/ScrabbleGame';
-import { getPuzzle } from '../utils/defaultPuzzle';
+import { usePuzzle } from '../hooks/usePuzzle';
 import {
   DEFAULT_PUZZLE_ID,
   getAdjacentPuzzleId,
@@ -14,11 +14,7 @@ import appStyles from '../App.module.scss';
 function PlayPage() {
   const { puzzleId: puzzleIdParam } = useParams();
   const puzzleId = parsePuzzleId(puzzleIdParam);
-
-  const puzzle = useMemo(() => {
-    if (!puzzleId || !isPuzzleIdAllowed(puzzleId)) return null;
-    return getPuzzle(puzzleId);
-  }, [puzzleId]);
+  const { puzzle, loading, error } = usePuzzle(puzzleId);
 
   if (!puzzleId || !isPuzzleIdAllowed(puzzleId)) {
     return <Navigate to={`/${DEFAULT_PUZZLE_ID}`} replace />;
@@ -36,40 +32,52 @@ function PlayPage() {
 
       <div className={pageStyles.playPage}>
         <p className={pageStyles.dateLabel}>Puzzle {puzzleId}</p>
-        <div className={pageStyles.playRow}>
-          <div className={pageStyles.navSide}>
-            {prevId && (
-              <Link
-                to={`/${prevId}`}
-                className={pageStyles.navButton}
-                aria-label="Previous puzzle"
-              >
-                ‹
-              </Link>
-            )}
-          </div>
 
-          <div className={pageStyles.mainColumn}>
-            <ScrabbleGame
-              key={puzzleId}
-              mode="play"
-              initialBoard={puzzle.board}
-              initialHand={puzzle.hand}
-            />
-          </div>
+        {loading && (
+          <p className={appStyles.statusMessage}>Loading puzzle…</p>
+        )}
+        {error && (
+          <p className={`${appStyles.statusMessage} ${appStyles.statusError}`}>
+            Could not load puzzle. Check your connection and API settings.
+          </p>
+        )}
 
-          <div className={pageStyles.navSide}>
-            {nextId && (
-              <Link
-                to={`/${nextId}`}
-                className={pageStyles.navButton}
-                aria-label="Next puzzle"
-              >
-                ›
-              </Link>
-            )}
+        {!loading && !error && puzzle && (
+          <div className={pageStyles.playRow}>
+            <div className={pageStyles.navSide}>
+              {prevId && (
+                <Link
+                  to={`/${prevId}`}
+                  className={pageStyles.navButton}
+                  aria-label="Previous puzzle"
+                >
+                  ‹
+                </Link>
+              )}
+            </div>
+
+            <div className={pageStyles.mainColumn}>
+              <ScrabbleGame
+                key={puzzleId}
+                mode="play"
+                initialBoard={puzzle.board}
+                initialHand={puzzle.hand}
+              />
+            </div>
+
+            <div className={pageStyles.navSide}>
+              {nextId && (
+                <Link
+                  to={`/${nextId}`}
+                  className={pageStyles.navButton}
+                  aria-label="Next puzzle"
+                >
+                  ›
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

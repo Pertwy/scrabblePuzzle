@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ScrabbleGame from '../components/ScrabbleGame/ScrabbleGame';
-import { getPuzzle } from '../utils/defaultPuzzle';
-import { savePuzzle } from '../utils/puzzleStorage';
+import { usePuzzle } from '../hooks/usePuzzle';
+import { savePuzzle } from '../utils/puzzleApi';
 import {
   DEFAULT_PUZZLE_ID,
   listPuzzleIds,
@@ -13,14 +13,10 @@ import appStyles from '../App.module.scss';
 function EditPage() {
   const puzzleIds = useMemo(() => listPuzzleIds(), []);
   const [selectedId, setSelectedId] = useState(DEFAULT_PUZZLE_ID);
+  const { puzzle, loading, error } = usePuzzle(selectedId);
 
-  const puzzle = useMemo(
-    () => getPuzzle(selectedId),
-    [selectedId]
-  );
-
-  const handleSave = (setup) => {
-    savePuzzle(selectedId, setup);
+  const handleSave = async (setup) => {
+    await savePuzzle(selectedId, setup);
   };
 
   return (
@@ -31,10 +27,8 @@ function EditPage() {
           <p>
             Choose a puzzle, arrange the board and hand, then save. Players open
             that puzzle at{' '}
-            <code className={styles.mono}>
-              /{selectedId}
-            </code>
-            . Double-click a board tile to remove it.
+            <code className={styles.mono}>/{selectedId}</code>. Double-click a
+            board tile to remove it.
           </p>
         </div>
         <div className={styles.toolbar}>
@@ -58,13 +52,23 @@ function EditPage() {
         </div>
       </div>
 
-      <ScrabbleGame
-        key={selectedId}
-        mode="edit"
-        initialBoard={puzzle.board}
-        initialHand={puzzle.hand}
-        onSaveSetup={handleSave}
-      />
+      {loading && (
+        <p className={appStyles.statusMessage}>Loading puzzle…</p>
+      )}
+      {error && (
+        <p className={`${appStyles.statusMessage} ${appStyles.statusError}`}>
+          Could not load puzzle. Check your connection and API settings.
+        </p>
+      )}
+      {!loading && !error && puzzle && (
+        <ScrabbleGame
+          key={selectedId}
+          mode="edit"
+          initialBoard={puzzle.board}
+          initialHand={puzzle.hand}
+          onSaveSetup={handleSave}
+        />
+      )}
     </div>
   );
 }
