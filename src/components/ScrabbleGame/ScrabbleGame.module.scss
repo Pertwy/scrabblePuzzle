@@ -6,6 +6,37 @@
   max-width: 1200px;
 }
 
+.dragGhost {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, -50%) scale(1.1);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff8e1;
+  border: 2px solid #4caf50;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 24px;
+  color: #333;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.dragGhostValue {
+  font-size: 11px;
+  color: #666;
+  position: absolute;
+  bottom: 3px;
+  right: 5px;
+  font-weight: normal;
+}
+
 .scoreSection {
   background-color: white;
   padding: 15px 30px;
@@ -27,6 +58,33 @@
   font-weight: 600;
   color: #444;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboardButton {
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #5c6bc0;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s, transform 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: #3f51b5;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
 }
 
 .message {

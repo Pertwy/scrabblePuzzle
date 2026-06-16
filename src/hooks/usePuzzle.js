@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { fetchPuzzle } from '../utils/defaultPuzzle';
+import { createEmptyPuzzle, fetchPuzzle } from '../utils/defaultPuzzle';
 
 /**
- * Load puzzle board/hand for a puzzle id (cloud API or local fallback).
+ * Load puzzle board/hand for a puzzle id (cloud API or localStorage).
+ * @param {string | null} puzzleId
+ * @param {{ ifMissing?: 'error' | 'empty' }} [options]
  */
-export function usePuzzle(puzzleId) {
+export function usePuzzle(puzzleId, { ifMissing = 'error' } = {}) {
   const [puzzle, setPuzzle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,14 +24,23 @@ export function usePuzzle(puzzleId) {
 
     try {
       const data = await fetchPuzzle(puzzleId);
-      setPuzzle(data);
+      if (data) {
+        setPuzzle(data);
+      } else if (ifMissing === 'empty') {
+        setPuzzle(createEmptyPuzzle());
+      } else {
+        setPuzzle(null);
+        setError(
+          new Error('Puzzle not found. Save it from /edit first.')
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load puzzle'));
       setPuzzle(null);
     } finally {
       setLoading(false);
     }
-  }, [puzzleId]);
+  }, [puzzleId, ifMissing]);
 
   useEffect(() => {
     load();

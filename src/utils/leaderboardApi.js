@@ -1,6 +1,7 @@
 import { getApiBase, isCloudPuzzleStorageEnabled } from './puzzleApi';
 
 const HIGH_SCORE_KEY = 'scrabble-leaderboard-high-';
+const MY_SUBMISSION_KEY = 'scrabble-my-submission-';
 
 function loadHighScoreLocal(puzzleId) {
   try {
@@ -48,6 +49,30 @@ function saveEntryLocal(puzzleId, word, score) {
   saveHighScoreLocal(puzzleId, score);
 }
 
+/**
+ * @returns {{ word: string, score: number } | null}
+ */
+export function loadMySubmission(puzzleId) {
+  try {
+    const raw = localStorage.getItem(MY_SUBMISSION_KEY + puzzleId);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (typeof data.word === 'string' && typeof data.score === 'number') {
+      return { word: data.word.toUpperCase(), score: data.score };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveMySubmission(puzzleId, word, score) {
+  localStorage.setItem(
+    MY_SUBMISSION_KEY + puzzleId,
+    JSON.stringify({ word: word.toUpperCase(), score })
+  );
+}
+
 async function apiFetch(path, options = {}) {
   const response = await fetch(`${getApiBase()}${path}`, options);
   if (!response.ok) {
@@ -86,6 +111,8 @@ export async function fetchLeaderboard(puzzleId) {
  * @returns {Promise<{ word: string, score: number }[]>}
  */
 export async function submitLeaderboardEntry(puzzleId, word, score) {
+  saveMySubmission(puzzleId, word, score);
+
   if (!isCloudPuzzleStorageEnabled()) {
     saveEntryLocal(puzzleId, word, score);
     return fetchLeaderboard(puzzleId);

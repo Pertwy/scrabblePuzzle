@@ -13,7 +13,7 @@ import appStyles from '../App.module.scss';
 function EditPage() {
   const puzzleIds = useMemo(() => listPuzzleIds(), []);
   const [selectedId, setSelectedId] = useState(DEFAULT_PUZZLE_ID);
-  const { puzzle, loading, error } = usePuzzle(selectedId);
+  const { puzzle, loading, error } = usePuzzle(selectedId, { ifMissing: 'empty' });
 
   const handleSave = async (setup) => {
     await savePuzzle(selectedId, setup);

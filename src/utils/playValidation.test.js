@@ -89,7 +89,33 @@ describe('validatePlayGeometry', () => {
       [7, 7],
     ]);
 
-    expect(result).toEqual({ valid: true, word: 'CAT' });
+    expect(result).toEqual({ valid: true, word: 'CAT', words: ['CAT'] });
+  });
+
+  test('accepts horizontal word that extends a vertical cross-word', () => {
+    const board = createEmptyBoard();
+    placeTile(board, 5, 7, 'C', false);
+    placeTile(board, 6, 7, 'A', false);
+    placeTile(board, 7, 7, 'R', false);
+    placeTile(board, 8, 7, 'S');
+    placeTile(board, 8, 8, 'T');
+    placeTile(board, 8, 9, 'A');
+    placeTile(board, 8, 10, 'R');
+    placeTile(board, 8, 11, 'T');
+
+    const result = validatePlayGeometry(board, [
+      [8, 7],
+      [8, 8],
+      [8, 9],
+      [8, 10],
+      [8, 11],
+    ]);
+
+    expect(result).toEqual({
+      valid: true,
+      word: 'START',
+      words: ['START', 'CARS'],
+    });
   });
 
   test('rejects play that forms two words on a straight line', () => {
@@ -111,6 +137,6 @@ describe('validatePlayGeometry', () => {
     ]);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toMatch(/one word/i);
+    expect(result.error).toMatch(/contiguous word/i);
   });
 });

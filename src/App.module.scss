@@ -38,13 +38,19 @@
 }
 
 @media (max-width: 768px) {
+  .app {
+    padding: 8px;
+  }
+
   .header {
+    margin-bottom: 16px;
+
     h1 {
-      font-size: 2rem;
+      font-size: 1.6rem;
     }
 
     p {
-      font-size: 1rem;
+      font-size: 0.95rem;
     }
   }
 }

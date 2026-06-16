@@ -1,6 +1,7 @@
 import {
   fetchHighScore,
   fetchLeaderboard,
+  loadMySubmission,
   submitLeaderboardEntry,
 } from './leaderboardApi';
 
@@ -35,6 +36,11 @@ describe('leaderboardApi local', () => {
     const board = await fetchLeaderboard('1');
     expect(board).toHaveLength(1);
     expect(board[0].score).toBe(20);
+  });
+
+  test('persists my submission for revisiting leaderboard', async () => {
+    await submitLeaderboardEntry('1', 'hello', 42);
+    expect(loadMySubmission('1')).toEqual({ word: 'HELLO', score: 42 });
   });
 });
 

@@ -20,9 +20,39 @@ export function getWordsIncludingNewTiles(board, newTilePositions) {
   );
 }
 
+/** Play direction when two or more tiles are placed; null for a single tile. */
+function getPlayDirection(newTilePositions) {
+  if (newTilePositions.length <= 1) return null;
+
+  const rows = new Set(newTilePositions.map(([row]) => row));
+  return rows.size === 1 ? 'horizontal' : 'vertical';
+}
+
+function wordContainsAllPositions(wordData, positions) {
+  return positions.every(([row, col]) =>
+    wordData.positions.some(([r, c]) => r === row && c === col)
+  );
+}
+
+/** The word spelled in the play direction that includes every new tile. */
+function getMainWord(words, newTilePositions, direction) {
+  if (!direction) {
+    return words[0] ?? null;
+  }
+
+  return (
+    words.find(
+      (wordData) =>
+        wordData.direction === direction &&
+        wordContainsAllPositions(wordData, newTilePositions)
+    ) ?? null
+  );
+}
+
 /**
- * Validates that new tiles form a single straight play and spell exactly one word.
- * @returns {{ valid: true, word: string } | { valid: false, error: string }}
+ * Validates that new tiles form a single straight play and spell a main word.
+ * Cross-words formed perpendicular to the play are allowed.
+ * @returns {{ valid: true, word: string, words: string[] } | { valid: false, error: string }}
  */
 export function validatePlayGeometry(board, newTilePositions) {
   if (!newTilePositions || newTilePositions.length === 0) {
@@ -49,12 +79,21 @@ export function validatePlayGeometry(board, newTilePositions) {
     };
   }
 
-  if (words.length > 1) {
+  const direction = getPlayDirection(newTilePositions);
+  const mainWord = getMainWord(words, newTilePositions, direction);
+
+  if (newTilePositions.length > 1 && !mainWord) {
     return {
       valid: false,
-      error: 'Only one word can be played at a time.',
+      error: 'Played tiles must form one contiguous word.',
     };
   }
 
-  return { valid: true, word: words[0].word };
+  const allWords = [...new Set(words.map((wordData) => wordData.word))];
+
+  return {
+    valid: true,
+    word: mainWord?.word ?? words[0].word,
+    words: allWords,
+  };
 }

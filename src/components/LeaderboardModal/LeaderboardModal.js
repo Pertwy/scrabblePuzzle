@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './LeaderboardModal.module.scss';
 
-function LeaderboardModal({ word, score, entries, onClose }) {
+function LeaderboardModal({ word, score, entries, revisit = false, onClose }) {
   return (
     <div
       className={styles.overlay}
@@ -24,10 +24,11 @@ function LeaderboardModal({ word, score, entries, onClose }) {
         </button>
 
         <h2 id="leaderboard-title" className={styles.title}>
-          Great play!
+          {revisit ? "Today's leaderboard" : 'Great play!'}
         </h2>
         <p className={styles.subtitle}>
           <strong>{word}</strong> scored <strong>{score}</strong> points
+          {revisit ? ' — your word' : ''}
         </p>
 
         <h3 className={styles.listHeading}>Top words</h3>

@@ -5,31 +5,22 @@ import styles from './Hand.module.scss';
 
 function Hand({
   tiles,
-  onDragStart,
+  onTilePointerDown,
   usedTileIds,
-  onDrop,
-  onDragOver,
+  draggingTileId,
   editMode = false,
   onHandLetterChange,
 }) {
   if (!tiles || tiles.length === 0) {
     return (
-      <div 
-        className={styles.hand}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-      >
-        <div className={styles.emptyHand}>No tiles remaining</div>
+      <div className={styles.hand} data-hand="true">
+        <div className={styles.emptyHand}>Drag tiles here</div>
       </div>
     );
   }
 
   return (
-    <div 
-      className={styles.hand}
-      onDrop={onDrop}
-      onDragOver={onDragOver}
-    >
+    <div className={styles.hand} data-hand="true">
       {tiles.map((tile) => {
         const letterUpper =
           typeof tile.letter === 'string' ? tile.letter.toUpperCase() : '';
@@ -41,15 +32,16 @@ function Hand({
               id={tile.id}
               letter={tile.letter}
               value={tile.value}
-              onDragStart={onDragStart}
+              onTilePointerDown={onTilePointerDown}
               used={usedTileIds.has(tile.id)}
+              dragging={draggingTileId === tile.id}
             />
             {editMode && onHandLetterChange && (
               <select
                 className={styles.letterSelect}
                 value={selectValue}
                 onChange={(e) => onHandLetterChange(tile.id, e.target.value)}
-                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
                 aria-label={`Letter for tile ${selectValue}`}
               >
                 {SCRABBLE_LETTERS.map((L) => (

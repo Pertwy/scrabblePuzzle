@@ -47,7 +47,7 @@ node aws/scripts/seed-default-puzzles.mjs
 
 (Requires `@aws-sdk/client-dynamodb` and `@aws-sdk/lib-dynamodb` — install once with `npm install --no-save` in the repo root.)
 
-Until a puzzle exists in DynamoDB, the app shows the built-in default layout (same as before).
+Until a puzzle exists in DynamoDB, the app shows a “Puzzle not found” message on the play page. Use `/edit` to create and save puzzles.
 
 ## API
 
@@ -61,6 +61,8 @@ Until a puzzle exists in DynamoDB, the app shows the built-in default layout (sa
 
 After adding leaderboard routes, run `sam build && sam deploy` again.
 
-## Local frontend without AWS
+## Local frontend
 
-Leave `REACT_APP_PUZZLES_API_URL` unset — the app falls back to `localStorage` for development.
+`npm start` loads `.env.development`, which points at the same puzzle API as production. Restart the dev server after changing env files.
+
+To save puzzles from `/edit` locally, add `REACT_APP_PUZZLES_EDIT_KEY` to `.env.local` (same value as the stack’s `EditApiKey` parameter).

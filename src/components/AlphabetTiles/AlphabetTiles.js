@@ -3,7 +3,7 @@ import Tile from '../Tile/Tile';
 import styles from './AlphabetTiles.module.scss';
 import { LETTER_VALUES } from '../../constants/scrabbleConstants';
 
-function AlphabetTiles({ onDragStart }) {
+function AlphabetTiles({ onTilePointerDown }) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   return (
@@ -16,7 +16,7 @@ function AlphabetTiles({ onDragStart }) {
             id={`alphabet-${letter}`}
             letter={letter}
             value={LETTER_VALUES[letter]}
-            onDragStart={onDragStart}
+            onTilePointerDown={onTilePointerDown}
             used={false}
             sourceType="alphabet"
           />

@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Board from '../Board/Board';
 import Hand from '../Hand/Hand';
 import AlphabetTiles from '../AlphabetTiles/AlphabetTiles';
 import { calculateTotalScore } from '../../utils/scoring';
 import { validatePlayGeometry } from '../../utils/playValidation';
-import { validateWord } from '../../utils/wordValidator';
+import { validateWords } from '../../utils/wordValidator';
 import { LETTER_VALUES } from '../../constants/scrabbleConstants';
 import { normalizeBoardFromStorage, normalizeHandFromStorage } from '../../utils/defaultPuzzle';
-import { submitLeaderboardEntry } from '../../utils/leaderboardApi';
+import { submitLeaderboardEntry, fetchLeaderboard, loadMySubmission } from '../../utils/leaderboardApi';
 import LeaderboardModal from '../LeaderboardModal/LeaderboardModal';
 import styles from './ScrabbleGame.module.scss';
 
@@ -71,37 +71,40 @@ function ScrabbleGame({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [leaderboardModal, setLeaderboardModal] = useState(null);
+  const [mySubmission, setMySubmission] = useState(null);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleDragOver = useCallback(
-    (e, row, col) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      const sourceType = e.dataTransfer.getData('sourceType');
-      if (!board[row][col] || sourceType === 'board') {
-        setDropTarget([row, col]);
-      }
-    },
-    [board]
-  );
+  const [dragging, setDragging] = useState(false);
+  const [ghost, setGhost] = useState(null);
+  const [draggingTileId, setDraggingTileId] = useState(null);
+  const [draggingFrom, setDraggingFrom] = useState(null);
+  const dragRef = useRef(null);
+  const dropOnCellRef = useRef(null);
+  const dropOnHandRef = useRef(null);
 
-  const handleDragLeave = useCallback(() => {
-    setDropTarget(null);
-  }, []);
+  useEffect(() => {
+    if (puzzleId && !editMode) {
+      setMySubmission(loadMySubmission(puzzleId));
+    } else {
+      setMySubmission(null);
+    }
+  }, [puzzleId, editMode]);
 
-  const handleDrop = useCallback(
-    (e, row, col) => {
-      e.preventDefault();
-      setDropTarget(null);
+  const dropOnCell = useCallback(
+    (payload, row, col) => {
+      const { tileId, letter, sourceType } = payload;
+      const value = parseInt(payload.value, 10);
+      const sourceRow =
+        payload.sourceRow !== undefined && payload.sourceRow !== null
+          ? String(payload.sourceRow)
+          : '';
+      const sourceCol =
+        payload.sourceCol !== undefined && payload.sourceCol !== null
+          ? String(payload.sourceCol)
+          : '';
 
-      const tileId = e.dataTransfer.getData('tileId');
-      const letter = e.dataTransfer.getData('letter');
-      const value = parseInt(e.dataTransfer.getData('value'), 10);
-      const sourceType = e.dataTransfer.getData('sourceType');
-      const sourceRow = e.dataTransfer.getData('sourceRow');
-      const sourceCol = e.dataTransfer.getData('sourceCol');
-
-      if (sourceType === 'board' && sourceRow && sourceCol) {
+      if (sourceType === 'board' && sourceRow !== '' && sourceCol !== '') {
         const srcRow = parseInt(sourceRow, 10);
         const srcCol = parseInt(sourceCol, 10);
 
@@ -215,14 +218,19 @@ function ScrabbleGame({
     [board, hand, newTilePositions, usedTileIds, editMode]
   );
 
-  const handleHandDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      const sourceType = e.dataTransfer.getData('sourceType');
-      const sourceRow = e.dataTransfer.getData('sourceRow');
-      const sourceCol = e.dataTransfer.getData('sourceCol');
+  const dropOnHand = useCallback(
+    (payload) => {
+      const { sourceType } = payload;
+      const sourceRow =
+        payload.sourceRow !== undefined && payload.sourceRow !== null
+          ? String(payload.sourceRow)
+          : '';
+      const sourceCol =
+        payload.sourceCol !== undefined && payload.sourceCol !== null
+          ? String(payload.sourceCol)
+          : '';
 
-      if (sourceType === 'board' && sourceRow && sourceCol) {
+      if (sourceType === 'board' && sourceRow !== '' && sourceCol !== '') {
         const srcRow = parseInt(sourceRow, 10);
         const srcCol = parseInt(sourceCol, 10);
         const tile = board[srcRow][srcCol];
@@ -256,8 +264,8 @@ function ScrabbleGame({
       }
 
       if (sourceType === 'alphabet' && editMode) {
-        const letter = e.dataTransfer.getData('letter');
-        const value = parseInt(e.dataTransfer.getData('value'), 10);
+        const letter = payload.letter;
+        const value = parseInt(payload.value, 10);
         if (hand.length < 7) {
           const newTileId = `tile-${Date.now()}`;
           setHand((prev) => [...prev, { id: newTileId, letter, value }]);
@@ -273,6 +281,30 @@ function ScrabbleGame({
     [board, newTilePositions, usedTileIds, editMode, hand]
   );
 
+  const handleViewLeaderboard = async () => {
+    if (!puzzleId || !mySubmission) return;
+
+    setIsLoadingLeaderboard(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const entries = await fetchLeaderboard(puzzleId);
+      setLeaderboardModal({
+        word: mySubmission.word,
+        score: mySubmission.score,
+        entries,
+        revisit: true,
+      });
+    } catch (error) {
+      console.error('Leaderboard error:', error);
+      setMessage({
+        type: 'error',
+        text: 'Could not load leaderboard. Try again.',
+      });
+    } finally {
+      setIsLoadingLeaderboard(false);
+    }
+  };
+
   const handleSubmit = async () => {
     const geometry = validatePlayGeometry(board, newTilePositions);
     if (!geometry.valid) {
@@ -284,7 +316,7 @@ function ScrabbleGame({
     setMessage({ type: 'info', text: 'Checking Scrabble dictionary...' });
 
     try {
-      const validation = await validateWord(geometry.word);
+      const validation = await validateWords(geometry.words);
 
       if (validation.valid) {
         const finalScore = calculateTotalScore(board, newTilePositions);
@@ -302,6 +334,7 @@ function ScrabbleGame({
               score: finalScore,
               entries,
             });
+            setMySubmission({ word: playedWord, score: finalScore });
             onLeaderboardUpdate?.();
             setMessage({ type: '', text: '' });
           } catch (lbError) {
@@ -320,7 +353,7 @@ function ScrabbleGame({
       } else {
         setMessage({
           type: 'error',
-          text: validation.error || 'Invalid word!',
+          text: validation.errors?.join(' ') || 'Invalid word!',
         });
       }
     } catch (error) {
@@ -364,7 +397,87 @@ function ScrabbleGame({
     setMessage({ type: '', text: '' });
   }, [board]);
 
-  const handleTileDragStart = useCallback(() => {}, []);
+  dropOnCellRef.current = dropOnCell;
+  dropOnHandRef.current = dropOnHand;
+
+  const handleTilePointerDown = useCallback((e, payload) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    dragRef.current = payload;
+    setDragging(true);
+    setDraggingTileId(payload.tileId);
+    setDraggingFrom(
+      payload.sourceType === 'board' &&
+        payload.sourceRow !== undefined &&
+        payload.sourceRow !== null
+        ? [payload.sourceRow, payload.sourceCol]
+        : null
+    );
+    setGhost({
+      x: e.clientX,
+      y: e.clientY,
+      letter: payload.letter,
+      value: payload.value,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return undefined;
+
+    const updateDropTarget = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      const cell = el && el.closest('[data-cell]');
+      if (cell) {
+        setDropTarget([
+          parseInt(cell.getAttribute('data-row'), 10),
+          parseInt(cell.getAttribute('data-col'), 10),
+        ]);
+      } else {
+        setDropTarget(null);
+      }
+    };
+
+    const handleMove = (e) => {
+      e.preventDefault();
+      const { clientX: x, clientY: y } = e;
+      setGhost((g) => (g ? { ...g, x, y } : g));
+      updateDropTarget(x, y);
+    };
+
+    const handleUp = (e) => {
+      const { clientX: x, clientY: y } = e;
+      const payload = dragRef.current;
+      const el = document.elementFromPoint(x, y);
+      if (payload && el) {
+        const cell = el.closest('[data-cell]');
+        const handArea = el.closest('[data-hand]');
+        if (cell) {
+          dropOnCellRef.current(
+            payload,
+            parseInt(cell.getAttribute('data-row'), 10),
+            parseInt(cell.getAttribute('data-col'), 10)
+          );
+        } else if (handArea) {
+          dropOnHandRef.current(payload);
+        }
+      }
+      dragRef.current = null;
+      setDragging(false);
+      setGhost(null);
+      setDraggingTileId(null);
+      setDraggingFrom(null);
+      setDropTarget(null);
+    };
+
+    window.addEventListener('pointermove', handleMove, { passive: false });
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+    };
+  }, [dragging]);
 
   const handleHandLetterChange = useCallback((tileId, letter) => {
     const L = typeof letter === 'string' ? letter.toUpperCase() : '';
@@ -456,11 +569,23 @@ function ScrabbleGame({
 
       {!editMode && puzzleId && (
         <div className={styles.highScoreBanner}>
-          {highScoreLoading
-            ? 'Loading best score…'
-            : highScore != null
-              ? `Best score: ${highScore}`
-              : 'No scores yet — be the first!'}
+          <span>
+            {highScoreLoading
+              ? 'Loading best score…'
+              : highScore != null
+                ? `Best score: ${highScore}`
+                : 'No scores yet — be the first!'}
+          </span>
+          {mySubmission && (
+            <button
+              type="button"
+              className={styles.leaderboardButton}
+              onClick={handleViewLeaderboard}
+              disabled={isLoadingLeaderboard}
+            >
+              {isLoadingLeaderboard ? 'Loading…' : 'View leaderboard'}
+            </button>
+          )}
         </div>
       )}
 
@@ -496,25 +621,22 @@ function ScrabbleGame({
 
       <Board
         board={board}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onTilePointerDown={handleTilePointerDown}
         dropTarget={dropTarget}
+        draggingFrom={draggingFrom}
         editMode={editMode}
         onTileRemove={editMode ? handleRemoveBoardTile : undefined}
       />
 
-      {editMode && <AlphabetTiles onDragStart={handleTileDragStart} />}
+      {editMode && (
+        <AlphabetTiles onTilePointerDown={handleTilePointerDown} />
+      )}
 
       <Hand
         tiles={hand}
-        onDragStart={handleTileDragStart}
+        onTilePointerDown={handleTilePointerDown}
         usedTileIds={editMode ? new Set() : usedTileIds}
-        onDrop={handleHandDrop}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        }}
+        draggingTileId={draggingTileId}
         editMode={editMode}
         onHandLetterChange={editMode ? handleHandLetterChange : undefined}
       />
@@ -551,8 +673,20 @@ function ScrabbleGame({
           word={leaderboardModal.word}
           score={leaderboardModal.score}
           entries={leaderboardModal.entries}
+          revisit={leaderboardModal.revisit}
           onClose={() => setLeaderboardModal(null)}
         />
+      )}
+
+      {ghost && (
+        <div
+          className={styles.dragGhost}
+          style={{ left: ghost.x, top: ghost.y }}
+          aria-hidden="true"
+        >
+          {ghost.letter}
+          <span className={styles.dragGhostValue}>{ghost.value}</span>
+        </div>
       )}
     </div>
   );

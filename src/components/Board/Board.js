@@ -4,10 +4,9 @@ import styles from './Board.module.scss';
 
 function Board({
   board,
-  onDrop,
-  onDragOver,
-  onDragLeave,
+  onTilePointerDown,
   dropTarget,
+  draggingFrom,
   editMode = false,
   onTileRemove,
 }) {
@@ -27,19 +26,21 @@ function Board({
     );
   };
 
-  const handleTileDragStart = (e, row, col, cell) => {
+  const handleTilePointerDown = (e, row, col, cell) => {
     // In edit mode, allow dragging all tiles. Otherwise, only allow dragging new tiles
     if (!editMode && !cell.isNew) {
-      e.preventDefault();
       return;
     }
-    e.dataTransfer.setData('tileId', cell.tileId || `board-${row}-${col}`);
-    e.dataTransfer.setData('letter', cell.letter);
-    e.dataTransfer.setData('value', cell.value);
-    e.dataTransfer.setData('sourceType', 'board');
-    e.dataTransfer.setData('sourceRow', row);
-    e.dataTransfer.setData('sourceCol', col);
-    e.dataTransfer.effectAllowed = 'move';
+    if (onTilePointerDown) {
+      onTilePointerDown(e, {
+        tileId: cell.tileId || `board-${row}-${col}`,
+        letter: cell.letter,
+        value: cell.value,
+        sourceType: 'board',
+        sourceRow: row,
+        sourceCol: col,
+      });
+    }
   };
 
   return (
@@ -55,20 +56,29 @@ function Board({
               isDropTarget ? styles.dropTarget : ''
             ].filter(Boolean).join(' ');
 
+            const isDragging =
+              draggingFrom &&
+              draggingFrom[0] === rowIndex &&
+              draggingFrom[1] === colIndex;
+            const isDraggable = editMode || (cell && cell.isNew);
+
             return (
               <div
                 key={`${rowIndex}-${colIndex}`}
                 className={cellClasses}
-                onDrop={(e) => onDrop(e, rowIndex, colIndex)}
-                onDragOver={(e) => onDragOver(e, rowIndex, colIndex)}
-                onDragLeave={onDragLeave}
+                data-cell="true"
+                data-row={rowIndex}
+                data-col={colIndex}
               >
                 {renderMultiplier(rowIndex, colIndex)}
                 {cell && (
                   <div
-                    className={`${styles.tile} ${cell.isNew ? styles.new : styles.existing}`}
-                    draggable={editMode || cell.isNew}
-                    onDragStart={(e) => handleTileDragStart(e, rowIndex, colIndex, cell)}
+                    className={`${styles.tile} ${cell.isNew ? styles.new : styles.existing} ${
+                      isDragging ? styles.dragging : ''
+                    }`}
+                    draggable={false}
+                    style={isDraggable ? { touchAction: 'none' } : undefined}
+                    onPointerDown={(e) => handleTilePointerDown(e, rowIndex, colIndex, cell)}
                     onDoubleClick={
                       editMode && onTileRemove
                         ? () => onTileRemove(rowIndex, colIndex)
