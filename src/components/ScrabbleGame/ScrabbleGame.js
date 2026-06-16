@@ -82,6 +82,7 @@ function ScrabbleGame({
   const dragRef = useRef(null);
   const dropOnCellRef = useRef(null);
   const dropOnHandRef = useRef(null);
+  const dropTargetRef = useRef(null);
 
   useEffect(() => {
     if (puzzleId && !editMode) {
@@ -427,14 +428,25 @@ function ScrabbleGame({
     const updateDropTarget = (x, y) => {
       const el = document.elementFromPoint(x, y);
       const cell = el && el.closest('[data-cell]');
+      let next = null;
       if (cell) {
-        setDropTarget([
+        next = [
           parseInt(cell.getAttribute('data-row'), 10),
           parseInt(cell.getAttribute('data-col'), 10),
-        ]);
-      } else {
-        setDropTarget(null);
+        ];
       }
+      const prev = dropTargetRef.current;
+      if (
+        (prev === null && next === null) ||
+        (prev &&
+          next &&
+          prev[0] === next[0] &&
+          prev[1] === next[1])
+      ) {
+        return;
+      }
+      dropTargetRef.current = next;
+      setDropTarget(next);
     };
 
     const handleMove = (e) => {
@@ -462,6 +474,7 @@ function ScrabbleGame({
         }
       }
       dragRef.current = null;
+      dropTargetRef.current = null;
       setDragging(false);
       setGhost(null);
       setDraggingTileId(null);

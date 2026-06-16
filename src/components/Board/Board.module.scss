@@ -20,6 +20,7 @@
 .cell {
   aspect-ratio: 1 / 1;
   width: 100%;
+  box-sizing: border-box;
   background-color: #d4a574;
   border: 1px solid #8b6f47;
   display: flex;
@@ -27,15 +28,18 @@
   justify-content: center;
   position: relative;
   cursor: pointer;
-  transition: background-color 0.2s;
 
-  &:hover {
-    background-color: #e5b885;
+  @media (hover: hover) {
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #e5b885;
+    }
   }
 
   &.dropTarget {
     background-color: #ffd700;
-    border: 2px solid #ff8c00;
+    box-shadow: inset 0 0 0 1px #ff8c00;
   }
 }
 
