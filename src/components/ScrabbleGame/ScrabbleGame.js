@@ -335,11 +335,14 @@ function ScrabbleGame({
               score: finalScore,
               entries,
             });
-            setMySubmission({ word: playedWord, score: finalScore });
+            setMySubmission(loadMySubmission(puzzleId));
             onLeaderboardUpdate?.();
             setMessage({ type: '', text: '' });
           } catch (lbError) {
             console.error('Leaderboard error:', lbError);
+            // The result is still saved locally (saveMySubmission runs before
+            // the network call), so keep the player's progress visible.
+            setMySubmission(loadMySubmission(puzzleId));
             setMessage({
               type: 'success',
               text: `Valid word! Score: ${finalScore} (leaderboard unavailable)`,
@@ -598,14 +601,25 @@ function ScrabbleGame({
                 </span>
               </div>
               {mySubmission && (
-                <button
-                  type="button"
-                  className={styles.leaderboardButton}
-                  onClick={handleViewLeaderboard}
-                  disabled={isLoadingLeaderboard}
-                >
-                  {isLoadingLeaderboard ? 'Loading…' : 'Leaderboard'}
-                </button>
+                <>
+                  <span className={styles.statDivider} aria-hidden="true" />
+                  <div className={styles.statItem}>
+                    <span className={styles.statLabel}>You</span>
+                    <span
+                      className={`${styles.statValue} ${styles.statValueYou}`}
+                    >
+                      {mySubmission.score}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.leaderboardButton}
+                    onClick={handleViewLeaderboard}
+                    disabled={isLoadingLeaderboard}
+                  >
+                    {isLoadingLeaderboard ? 'Loading…' : 'Leaderboard'}
+                  </button>
+                </>
               )}
             </>
           )}

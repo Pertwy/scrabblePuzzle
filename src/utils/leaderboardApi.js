@@ -66,11 +66,19 @@ export function loadMySubmission(puzzleId) {
   }
 }
 
+/**
+ * Persist the player's result for a puzzle, keeping their best score so that
+ * replaying with a lower-scoring word never erases a previous high score.
+ * @returns {{ word: string, score: number }} the stored (best) submission
+ */
 export function saveMySubmission(puzzleId, word, score) {
-  localStorage.setItem(
-    MY_SUBMISSION_KEY + puzzleId,
-    JSON.stringify({ word: word.toUpperCase(), score })
-  );
+  const existing = loadMySubmission(puzzleId);
+  if (existing && existing.score >= score) {
+    return existing;
+  }
+  const entry = { word: word.toUpperCase(), score };
+  localStorage.setItem(MY_SUBMISSION_KEY + puzzleId, JSON.stringify(entry));
+  return entry;
 }
 
 async function apiFetch(path, options = {}) {
