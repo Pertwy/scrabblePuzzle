@@ -32,8 +32,9 @@ function PlayPage() {
   return (
     <div className={appStyles.app}>
       <div className={appStyles.header}>
-        <h1>Scrabble Best Pick</h1>
-        <p>Find the best word you can play!</p>
+        <h1>
+          Scrabble <em>Best Pick</em>
+        </h1>
       </div>
 
       <div className={pageStyles.playPage}>

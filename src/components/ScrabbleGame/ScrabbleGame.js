@@ -576,28 +576,38 @@ function ScrabbleGame({
 
   return (
     <div className={styles.gameContainer}>
-      <div className={styles.scoreSection}>
-        {editMode ? 'Edit Mode' : `Current Score: ${currentScore}`}
-      </div>
-
-      {!editMode && puzzleId && (
-        <div className={styles.highScoreBanner}>
-          <span>
-            {highScoreLoading
-              ? 'Loading best score…'
-              : highScore != null
-                ? `Best score: ${highScore}`
-                : 'No scores yet — be the first!'}
-          </span>
-          {mySubmission && (
-            <button
-              type="button"
-              className={styles.leaderboardButton}
-              onClick={handleViewLeaderboard}
-              disabled={isLoadingLeaderboard}
-            >
-              {isLoadingLeaderboard ? 'Loading…' : 'View leaderboard'}
-            </button>
+      {editMode ? (
+        <div className={styles.scoreSection}>Edit Mode</div>
+      ) : (
+        <div className={styles.statusBar}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Score</span>
+            <span className={styles.statValue}>{currentScore}</span>
+          </div>
+          {puzzleId && (
+            <>
+              <span className={styles.statDivider} aria-hidden="true" />
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>Best</span>
+                <span className={styles.statValue}>
+                  {highScoreLoading
+                    ? '…'
+                    : highScore != null
+                      ? highScore
+                      : '—'}
+                </span>
+              </div>
+              {mySubmission && (
+                <button
+                  type="button"
+                  className={styles.leaderboardButton}
+                  onClick={handleViewLeaderboard}
+                  disabled={isLoadingLeaderboard}
+                >
+                  {isLoadingLeaderboard ? 'Loading…' : 'Leaderboard'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

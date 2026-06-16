@@ -1,42 +1,70 @@
 .hand {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 12px;
-  padding: 20px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  margin-top: 20px;
+  gap: 14px;
+  padding: 14px 26px 18px;
+  background: var(--ink-700);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-top: 14px;
   flex-wrap: wrap;
-  min-height: 100px;
+  min-height: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+/* a little "rack lip" beneath the tiles */
+.hand::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 10px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong),
+    transparent
+  );
 }
 
 .tileSlot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .letterSelect {
-  font-size: 0.75rem;
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 5px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line-strong);
+  background: var(--ink-500);
+  color: var(--text);
   max-width: 100%;
   cursor: pointer;
-  background: white;
+
+  &:hover,
+  &:focus {
+    border-color: var(--accent-line);
+  }
 }
 
 .emptyHand {
-  color: #999;
+  color: var(--text-faint);
   font-style: italic;
   padding: 20px;
 }
 
 @media (max-width: 768px) {
   .hand {
-    gap: 8px;
-    padding: 15px;
+    gap: 10px;
+    padding: 16px;
   }
 }

@@ -23,7 +23,10 @@ function EditPage() {
     <div className={appStyles.app}>
       <div className={styles.editHeader}>
         <div className={appStyles.header}>
-          <h1>Edit puzzle</h1>
+          <span className={appStyles.eyebrow}>Puzzle Studio</span>
+          <h1>
+            Edit <em>puzzle</em>
+          </h1>
           <p>
             Choose a puzzle, arrange the board and hand, then save. Players open
             that puzzle at{' '}

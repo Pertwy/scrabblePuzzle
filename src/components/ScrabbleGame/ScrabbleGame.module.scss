@@ -6,23 +6,25 @@
   max-width: 1200px;
 }
 
+/* ---------- Drag ghost ---------- */
 .dragGhost {
   position: fixed;
   z-index: 1000;
-  transform: translate(-50%, -50%) scale(1.1);
-  width: 48px;
-  height: 48px;
+  transform: translate(-50%, -50%) scale(1.12) rotate(-3deg);
+  width: 50px;
+  height: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #fff8e1;
-  border: 2px solid #4caf50;
-  border-radius: 4px;
-  font-weight: bold;
+  background: linear-gradient(180deg, var(--tile-face-hi), var(--tile-face));
+  border: 1px solid var(--tile-edge);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-sans);
+  font-weight: 700;
   font-size: 24px;
-  color: #333;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  color: var(--tile-ink);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.55);
   pointer-events: none;
   user-select: none;
   touch-action: none;
@@ -30,169 +32,238 @@
 
 .dragGhostValue {
   font-size: 11px;
-  color: #666;
+  color: var(--tile-sub);
   position: absolute;
   bottom: 3px;
   right: 5px;
-  font-weight: normal;
+  font-weight: 600;
 }
 
+/* ---------- Score (edit mode) ---------- */
 .scoreSection {
-  background-color: white;
-  padding: 15px 30px;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  background: var(--ink-700);
+  border: 1px solid var(--line);
+  padding: 10px 26px;
+  border-radius: var(--radius-pill);
   margin-bottom: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-}
-
-.highScoreBanner {
-  background: rgba(255, 255, 255, 0.92);
-  padding: 10px 24px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: #444;
-  text-align: center;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Horizontal status bar (score · best · leaderboard) ---------- */
+.statusBar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  background: var(--ink-700);
+  border: 1px solid var(--line);
+  padding: 8px 22px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.statItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.statLabel {
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.statValue {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.statDivider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 22px;
+  background: var(--line-strong);
 }
 
 .leaderboardButton {
-  padding: 8px 18px;
-  font-size: 0.95rem;
+  padding: 7px 16px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
   font-weight: 600;
-  border: none;
-  border-radius: 6px;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  background-color: #5c6bc0;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.2s, transform 0.2s;
+  background-color: transparent;
+  color: var(--text);
+  transition: transform 0.2s var(--ease), background-color 0.2s var(--ease),
+    color 0.2s var(--ease), border-color 0.2s var(--ease);
 
   &:hover:not(:disabled) {
-    background-color: #3f51b5;
-    transform: translateY(-1px);
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    transform: translateY(-2px);
   }
 
   &:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: wait;
   }
 }
 
+/* ---------- Status message ---------- */
 .message {
-  margin-top: 20px;
-  padding: 15px 30px;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  margin-top: 12px;
+  padding: 10px 24px;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
   text-align: center;
-  min-height: 50px;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid transparent;
 
   &.success {
-    background-color: #4caf50;
-    color: white;
+    background-color: var(--cyan-soft);
+    border-color: var(--cyan);
+    color: var(--cyan);
   }
 
   &.error {
-    background-color: #f44336;
-    color: white;
+    background-color: var(--accent-soft);
+    border-color: var(--accent-line);
+    color: var(--accent);
   }
 
   &.info {
-    background-color: #2196f3;
-    color: white;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--line-strong);
+    color: var(--text-muted);
   }
 }
 
+/* ---------- Buttons ---------- */
 .buttonGroup {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
 }
 
 .button {
-  padding: 12px 30px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
+  padding: 11px 30px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s var(--ease), filter 0.2s var(--ease),
+    background-color 0.2s var(--ease), color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.05);
   }
 
   &:active {
     transform: translateY(0);
   }
 
+  /* primary — submit */
   &.submit {
-    background-color: #4caf50;
-    color: white;
+    background-color: var(--accent);
+    color: var(--accent-ink);
+
+    &:disabled {
+      background-color: var(--ink-500);
+      color: var(--text-faint);
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  /* destructive — clear */
+  &.clear {
+    background-color: transparent;
+    border-color: var(--coral);
+    color: var(--coral);
 
     &:hover {
-      background-color: #45a049;
+      background-color: var(--coral);
+      color: var(--coral-ink);
     }
 
     &:disabled {
-      background-color: #cccccc;
+      border-color: var(--line);
+      color: var(--text-faint);
+      cursor: not-allowed;
+      transform: none;
+      background-color: transparent;
+    }
+  }
+
+  /* save */
+  &.save {
+    background-color: var(--cyan);
+    color: var(--cyan-ink);
+
+    &:disabled {
+      background-color: var(--ink-500);
+      color: var(--text-faint);
       cursor: not-allowed;
       transform: none;
     }
   }
 
-  &.clear {
-    background-color: #ff9800;
-    color: white;
-
-    &:hover {
-      background-color: #f57c00;
-    }
-  }
-
-  &.save {
-    background-color: #9c27b0;
-    color: white;
-
-    &:hover {
-      background-color: #7b1fa2;
-    }
-  }
-
+  /* neutral — import */
   &.import {
-    background-color: #607d8b;
-    color: white;
-    cursor: pointer;
-    display: inline-block;
+    background-color: transparent;
+    border-color: var(--line-strong);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
 
     &:hover {
-      background-color: #455a64;
+      border-color: var(--text-muted);
+      background-color: var(--ink-600);
     }
   }
 }
 
 @media (max-width: 768px) {
   .scoreSection {
-    font-size: 1rem;
-    padding: 12px 20px;
+    font-size: 0.95rem;
+    padding: 13px 24px;
   }
 
   .button {
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 11px 22px;
+    font-size: 0.95rem;
   }
 }

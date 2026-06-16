@@ -1,17 +1,102 @@
+/* =====================================================================
+   LEXICON — design system tokens
+   A warm-ink editorial theme: obsidian surfaces, ivory tiles,
+   electric-lime + cyan accents, expressive serif display type.
+   ===================================================================== */
+:root {
+  /* Type */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Ink surfaces (warm slate — softer than pure black) */
+  --ink-900: #21232d;
+  --ink-800: #272a35;
+  --ink-700: #2e3240;
+  --ink-600: #383c4c;
+  --ink-500: #444859;
+  --ink-400: #525668;
+
+  /* Hairlines */
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  /* Text */
+  --text: #f5f3ec;
+  --text-muted: #b1b5c4;
+  --text-faint: #80849a;
+
+  /* Accents */
+  --accent: #ec4b52; /* signal red — primary brand */
+  --accent-ink: #fff4f3; /* text on red */
+  --accent-soft: rgba(236, 75, 82, 0.16);
+  --accent-line: rgba(236, 75, 82, 0.55);
+
+  --cyan: #e0a52e; /* secondary accent — warm gold */
+  --cyan-ink: #2a1c00;
+  --cyan-soft: rgba(224, 165, 46, 0.16);
+
+  --coral: #f06a4d; /* destructive / clear — ember orange */
+  --coral-ink: #2a0d08;
+  --coral-soft: rgba(240, 106, 77, 0.16);
+
+  --gold: #f2c14e; /* highlights / records */
+
+  /* Tiles (physical ivory) */
+  --tile-face: #f4efe1;
+  --tile-face-hi: #fbf8ef;
+  --tile-edge: #cbc2ab;
+  --tile-ink: #1a1c24;
+  --tile-sub: #8a8470;
+
+  /* Geometry */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
+  --shadow-tile: 0 3px 0 var(--tile-edge), 0 6px 12px rgba(0, 0, 0, 0.4);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: var(--ink-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'Space Grotesk', source-code-pro, Menlo, Monaco, Consolas,
+    'Courier New', monospace;
+}
+
+/* Focus visibility for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

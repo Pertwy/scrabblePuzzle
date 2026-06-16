@@ -1,9 +1,10 @@
 .board {
   display: inline-block;
-  background-color: #1a5f3f;
-  padding: clamp(4px, 1.2vw, 8px);
-  border-radius: 4px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: var(--ink-700);
+  padding: clamp(8px, 1.6vw, 14px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   max-width: 100%;
 }
 
@@ -11,9 +12,12 @@
   display: grid;
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
-  gap: clamp(1px, 0.4vw, 2px);
-  background-color: #1a5f3f;
-  width: min(90vw, 628px);
+  gap: clamp(2px, 0.5vw, 4px);
+  background: transparent;
+  /* Grow to fill the available area: limited by width, by the height left
+     after page chrome (header, status bar, rack, buttons), and a generous
+     max so it never gets absurd. Keeps everything on one screen. */
+  width: min(92vw, calc(100vh - 350px), 900px);
   max-width: 100%;
 }
 
@@ -21,8 +25,10 @@
   aspect-ratio: 1 / 1;
   width: 100%;
   box-sizing: border-box;
-  background-color: #d4a574;
-  border: 1px solid #8b6f47;
+  container-type: inline-size;
+  background-color: var(--ink-500);
+  border: 1px solid var(--line);
+  border-radius: clamp(3px, 0.7vw, 6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,45 +36,67 @@
   cursor: pointer;
 
   @media (hover: hover) {
-    transition: background-color 0.2s;
+    transition: background-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
 
     &:hover {
-      background-color: #e5b885;
+      background-color: var(--ink-400);
     }
   }
 
   &.dropTarget {
-    background-color: #ffd700;
-    box-shadow: inset 0 0 0 1px #ff8c00;
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 2px var(--accent);
   }
 }
 
 .multiplier {
   position: absolute;
-  font-size: clamp(5px, 1.3vw, 8px);
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: clamp(6px, 26cqi, 13px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
   pointer-events: none;
   z-index: 1;
+  opacity: 0.92;
 }
 
+/* Word multipliers — lime family */
 .tw {
-  background-color: #d32f2f;
+  background-color: var(--accent);
+  .multiplier {
+    color: var(--accent-ink);
+  }
 }
 
 .dw {
-  background-color: #ff6b6b;
+  background-color: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  .multiplier {
+    color: var(--accent);
+  }
 }
 
+/* Letter multipliers — cyan family */
 .tl {
-  background-color: #1976d2;
+  background-color: var(--cyan);
+  .multiplier {
+    color: var(--cyan-ink);
+  }
 }
 
 .dl {
-  background-color: #64b5f6;
+  background-color: var(--cyan-soft);
+  box-shadow: inset 0 0 0 1px rgba(224, 165, 46, 0.5);
+  .multiplier {
+    color: var(--cyan);
+  }
 }
 
+/* ---------- Board tiles (ivory) ---------- */
 .tile {
   width: 100%;
   height: 100%;
@@ -76,27 +104,29 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #fff8e1;
-  border: 1px solid #ccc;
-  border-radius: 2px;
-  font-weight: bold;
-  font-size: clamp(11px, 3.4vw, 20px);
-  color: #333;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, var(--tile-face-hi), var(--tile-face));
+  border: 1px solid var(--tile-edge);
+  border-radius: clamp(3px, 0.7vw, 6px);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(11px, 52cqi, 30px);
+  color: var(--tile-ink);
+  box-shadow: 0 2px 0 var(--tile-edge), 0 3px 6px rgba(0, 0, 0, 0.4);
   position: relative;
   z-index: 2;
   touch-action: none;
   user-select: none;
 
   &.existing {
-    background-color: #f5f5f5;
+    background: var(--tile-face);
+    opacity: 0.9;
     cursor: default;
   }
 
   &.new {
-    background-color: #fff8e1;
-    border: 2px solid #4caf50;
     cursor: grab;
+    box-shadow: 0 0 0 2px var(--accent), 0 2px 0 var(--tile-edge),
+      0 4px 10px rgba(0, 0, 0, 0.45);
 
     &:active {
       cursor: grabbing;
@@ -104,14 +134,15 @@
   }
 
   &.dragging {
-    opacity: 0.35;
+    opacity: 0.32;
   }
 }
 
 .tileValue {
-  font-size: clamp(6px, 1.6vw, 10px);
-  color: #666;
+  font-size: clamp(6px, 22cqi, 13px);
+  font-weight: 600;
+  color: var(--tile-sub);
   position: absolute;
   bottom: 1px;
-  right: 2px;
+  right: 3px;
 }
