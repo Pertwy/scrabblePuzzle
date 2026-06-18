@@ -40,6 +40,8 @@ function buildSerializableSetup(board, hand) {
  * @param {Array} props.initialBoard
  * @param {Array} props.initialHand
  * @param {(setup: { board: unknown, hand: unknown }) => void} [props.onSaveSetup] — edit mode: persist puzzle (replaces file download)
+ * @param {(setup: { board: unknown, hand: unknown }) => void} [props.onPublish] — edit mode: publish the draft to the next puzzle number
+ * @param {string} [props.saveLabel] — edit mode: label for the save button
  * @param {string} [props.puzzleId] — play mode: puzzle id for leaderboard
  * @param {number | null} [props.highScore] — play mode: best score on this puzzle (word hidden)
  * @param {boolean} [props.highScoreLoading]
@@ -50,6 +52,8 @@ function ScrabbleGame({
   initialBoard,
   initialHand,
   onSaveSetup,
+  onPublish,
+  saveLabel = 'Save puzzle',
   puzzleId,
   highScore = null,
   highScoreLoading = false,
@@ -70,6 +74,7 @@ function ScrabbleGame({
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [leaderboardModal, setLeaderboardModal] = useState(null);
   const [mySubmission, setMySubmission] = useState(null);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
@@ -542,6 +547,24 @@ function ScrabbleGame({
     setMessage({ type: 'success', text: 'Setup saved to scrabble-setup.json' });
   };
 
+  const handlePublish = async () => {
+    if (!onPublish) return;
+    const setup = buildSerializableSetup(board, hand);
+    setIsPublishing(true);
+    setMessage({ type: '', text: '' });
+    try {
+      await onPublish(setup);
+      setMessage({ type: 'success', text: 'Puzzle published.' });
+    } catch {
+      setMessage({
+        type: 'error',
+        text: 'Failed to publish puzzle. Try again.',
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleImportSetup = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -632,14 +655,25 @@ function ScrabbleGame({
             type="button"
             className={`${styles.button} ${styles.save}`}
             onClick={handleSaveSetup}
-            disabled={isSaving}
+            disabled={isSaving || isPublishing}
           >
-            {isSaving ? 'Saving…' : 'Save puzzle'}
+            {isSaving ? 'Saving…' : saveLabel}
           </button>
+          {onPublish && (
+            <button
+              type="button"
+              className={`${styles.button} ${styles.submit}`}
+              onClick={handlePublish}
+              disabled={isSaving || isPublishing}
+            >
+              {isPublishing ? 'Publishing…' : 'Publish'}
+            </button>
+          )}
           <button
             type="button"
             className={`${styles.button} ${styles.clear}`}
             onClick={handleClearBoard}
+            disabled={isSaving || isPublishing}
           >
             Clear board
           </button>

@@ -4,16 +4,15 @@ const {
   GetCommand,
   PutCommand,
   QueryCommand,
+  ScanCommand,
+  DeleteCommand,
 } = require('@aws-sdk/lib-dynamodb');
+const { randomUUID } = require('crypto');
 
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME;
 const LEADERBOARD_TABLE_NAME = process.env.LEADERBOARD_TABLE_NAME;
 const EDIT_API_KEY = process.env.EDIT_API_KEY || '';
-const ALLOWED_PUZZLE_IDS = (process.env.ALLOWED_PUZZLE_IDS || '1,2,3')
-  .split(',')
-  .map((id) => id.trim())
-  .filter(Boolean);
 const LEADERBOARD_LIMIT = 20;
 
 const AMPLIFY_ORIGIN_SUFFIX = '.ddfup0xv0rhdf.amplifyapp.com';
@@ -61,7 +60,7 @@ function corsHeaders(event) {
   return {
     'Access-Control-Allow-Origin': resolveCorsOrigin(event),
     'Access-Control-Allow-Headers': 'Content-Type,X-Edit-Key',
-    'Access-Control-Allow-Methods': 'GET,PUT,POST,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,OPTIONS',
     'Content-Type': 'application/json',
   };
 }
@@ -74,8 +73,53 @@ function jsonResponse(event, statusCode, body) {
   };
 }
 
-function isAllowedPuzzleId(puzzleId) {
-  return ALLOWED_PUZZLE_IDS.includes(puzzleId);
+function isPublishedId(puzzleId) {
+  return /^\d+$/.test(puzzleId);
+}
+
+function isDraftId(puzzleId) {
+  return /^draft-[\w-]+$/.test(puzzleId);
+}
+
+function isValidPuzzleId(puzzleId) {
+  return isPublishedId(puzzleId) || isDraftId(puzzleId);
+}
+
+function statusOf(item) {
+  if (item.status) return item.status;
+  return isPublishedId(item.puzzleId) ? 'published' : 'draft';
+}
+
+function numberOf(item) {
+  if (typeof item.number === 'number') return item.number;
+  return isPublishedId(item.puzzleId) ? Number(item.puzzleId) : null;
+}
+
+/**
+ * @returns {object | null} a 401 response when the edit key is required and
+ * missing/incorrect, otherwise null (authorized).
+ */
+function requireEditKey(event) {
+  if (!EDIT_API_KEY) return null;
+  const provided =
+    event.headers?.['x-edit-key'] || event.headers?.['X-Edit-Key'];
+  if (provided !== EDIT_API_KEY) {
+    return jsonResponse(event, 401, { error: 'Unauthorized' });
+  }
+  return null;
+}
+
+async function scanAllPuzzles() {
+  const items = [];
+  let ExclusiveStartKey;
+  do {
+    const result = await docClient.send(
+      new ScanCommand({ TableName: TABLE_NAME, ExclusiveStartKey })
+    );
+    items.push(...(result.Items || []));
+    ExclusiveStartKey = result.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items;
 }
 
 function validateSetup(data) {
@@ -106,6 +150,7 @@ function getRoute(event, puzzleId) {
   const base = `/puzzles/${puzzleId}`;
   if (path === `${base}/leaderboard/high`) return 'leaderboard-high';
   if (path === `${base}/leaderboard`) return 'leaderboard';
+  if (path === `${base}/publish`) return 'publish';
   if (path === base) return 'puzzle';
   return null;
 }
@@ -218,13 +263,8 @@ async function handleGetPuzzle(event, puzzleId) {
 }
 
 async function handlePutPuzzle(event, puzzleId) {
-  if (EDIT_API_KEY) {
-    const provided =
-      event.headers?.['x-edit-key'] || event.headers?.['X-Edit-Key'];
-    if (provided !== EDIT_API_KEY) {
-      return jsonResponse(event, 401, { error: 'Unauthorized' });
-    }
-  }
+  const unauthorized = requireEditKey(event);
+  if (unauthorized) return unauthorized;
 
   let body;
   try {
@@ -237,16 +277,155 @@ async function handlePutPuzzle(event, puzzleId) {
     return jsonResponse(event, 400, { error: 'Invalid puzzle setup' });
   }
 
+  const existing = await docClient.send(
+    new GetCommand({ TableName: TABLE_NAME, Key: { puzzleId } })
+  );
+  const prev = existing.Item || {};
+  const isNumeric = isPublishedId(puzzleId);
+  const now = new Date().toISOString();
+
+  const item = {
+    puzzleId,
+    board: body.board,
+    hand: body.hand,
+    status: prev.status || (isNumeric ? 'published' : 'draft'),
+    updatedAt: now,
+  };
+  if (prev.createdAt) item.createdAt = prev.createdAt;
+  if (prev.publishedAt) item.publishedAt = prev.publishedAt;
+  if (typeof prev.number === 'number') {
+    item.number = prev.number;
+  } else if (isNumeric) {
+    item.number = Number(puzzleId);
+  }
+
+  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+
+  return jsonResponse(event, 200, { ok: true });
+}
+
+async function handleListPuzzles(event) {
+  const items = await scanAllPuzzles();
+  const puzzles = items.map((item) => ({
+    puzzleId: item.puzzleId,
+    status: statusOf(item),
+    number: numberOf(item),
+    board: item.board,
+    hand: item.hand,
+    updatedAt: item.updatedAt || item.createdAt || null,
+  }));
+  return jsonResponse(event, 200, { puzzles });
+}
+
+async function handleCreateDraft(event) {
+  const unauthorized = requireEditKey(event);
+  if (unauthorized) return unauthorized;
+
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch {
+    return jsonResponse(event, 400, { error: 'Invalid JSON body' });
+  }
+
+  if (!validateSetup(body)) {
+    return jsonResponse(event, 400, { error: 'Invalid puzzle setup' });
+  }
+
+  const puzzleId = `draft-${randomUUID()}`;
+  const now = new Date().toISOString();
+
   await docClient.send(
     new PutCommand({
       TableName: TABLE_NAME,
       Item: {
         puzzleId,
+        status: 'draft',
         board: body.board,
         hand: body.hand,
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
       },
     })
+  );
+
+  return jsonResponse(event, 201, { puzzleId });
+}
+
+async function handlePublishPuzzle(event, puzzleId) {
+  const unauthorized = requireEditKey(event);
+  if (unauthorized) return unauthorized;
+
+  if (!isDraftId(puzzleId)) {
+    return jsonResponse(event, 400, { error: 'Only drafts can be published' });
+  }
+
+  const draft = await docClient.send(
+    new GetCommand({ TableName: TABLE_NAME, Key: { puzzleId } })
+  );
+  if (!draft.Item) {
+    return jsonResponse(event, 404, { error: 'Draft not found' });
+  }
+
+  const items = await scanAllPuzzles();
+  let maxNumber = 0;
+  for (const item of items) {
+    if (statusOf(item) === 'draft') continue;
+    const n = numberOf(item);
+    if (typeof n === 'number' && n > maxNumber) maxNumber = n;
+  }
+
+  const now = new Date().toISOString();
+  let number = maxNumber + 1;
+  let published = false;
+
+  for (let attempt = 0; attempt < 25 && !published; attempt += 1) {
+    try {
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLE_NAME,
+          Item: {
+            puzzleId: String(number),
+            number,
+            status: 'published',
+            board: draft.Item.board,
+            hand: draft.Item.hand,
+            createdAt: draft.Item.createdAt || now,
+            publishedAt: now,
+            updatedAt: now,
+          },
+          ConditionExpression: 'attribute_not_exists(puzzleId)',
+        })
+      );
+      published = true;
+    } catch (err) {
+      if (err.name === 'ConditionalCheckFailedException') {
+        number += 1;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  if (!published) {
+    return jsonResponse(event, 500, {
+      error: 'Could not assign a puzzle number',
+    });
+  }
+
+  await docClient.send(
+    new DeleteCommand({ TableName: TABLE_NAME, Key: { puzzleId } })
+  );
+
+  return jsonResponse(event, 200, { puzzleId: String(number), number });
+}
+
+async function handleDeletePuzzle(event, puzzleId) {
+  const unauthorized = requireEditKey(event);
+  if (unauthorized) return unauthorized;
+
+  await docClient.send(
+    new DeleteCommand({ TableName: TABLE_NAME, Key: { puzzleId } })
   );
 
   return jsonResponse(event, 200, { ok: true });
@@ -260,7 +439,19 @@ exports.handler = async (event) => {
   }
 
   const puzzleId = getPuzzleId(event);
-  if (!puzzleId || !isAllowedPuzzleId(puzzleId)) {
+
+  // Collection routes: /puzzles (list all, create draft)
+  if (!puzzleId) {
+    if (method === 'GET') {
+      return handleListPuzzles(event);
+    }
+    if (method === 'POST') {
+      return handleCreateDraft(event);
+    }
+    return jsonResponse(event, 405, { error: 'Method not allowed' });
+  }
+
+  if (!isValidPuzzleId(puzzleId)) {
     return jsonResponse(event, 404, { error: 'Unknown puzzle' });
   }
 
@@ -281,12 +472,20 @@ exports.handler = async (event) => {
     return handlePostLeaderboard(event, puzzleId);
   }
 
+  if (route === 'publish' && method === 'POST') {
+    return handlePublishPuzzle(event, puzzleId);
+  }
+
   if (route === 'puzzle' && method === 'GET') {
     return handleGetPuzzle(event, puzzleId);
   }
 
   if (route === 'puzzle' && method === 'PUT') {
     return handlePutPuzzle(event, puzzleId);
+  }
+
+  if (route === 'puzzle' && method === 'DELETE') {
+    return handleDeletePuzzle(event, puzzleId);
   }
 
   return jsonResponse(event, 405, { error: 'Method not allowed' });

@@ -39,7 +39,6 @@ export const BOARD_MULTIPLIERS = {
 
 // Get multiplier type for a position
 export function getMultiplierType(row, col) {
-  const pos = [row, col];
   if (BOARD_MULTIPLIERS.TW.some(p => p[0] === row && p[1] === col)) return 'TW';
   if (BOARD_MULTIPLIERS.DW.some(p => p[0] === row && p[1] === col)) return 'DW';
   if (BOARD_MULTIPLIERS.TL.some(p => p[0] === row && p[1] === col)) return 'TL';

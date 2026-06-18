@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import ScrabbleGame from '../components/ScrabbleGame/ScrabbleGame';
 import { usePuzzle } from '../hooks/usePuzzle';
 import { useLeaderboardHighScore } from '../hooks/useLeaderboardHighScore';
+import { usePublishedIds } from '../hooks/usePublishedIds';
 import {
   DEFAULT_PUZZLE_ID,
   getAdjacentPuzzleId,
@@ -16,6 +17,7 @@ function PlayPage() {
   const { puzzleId: puzzleIdParam } = useParams();
   const puzzleId = parsePuzzleId(puzzleIdParam);
   const { puzzle, loading, error } = usePuzzle(puzzleId);
+  const { ids: publishedIds } = usePublishedIds();
   const {
     highScore,
     loading: highScoreLoading,
@@ -26,8 +28,8 @@ function PlayPage() {
     return <Navigate to={`/${DEFAULT_PUZZLE_ID}`} replace />;
   }
 
-  const prevId = getAdjacentPuzzleId(puzzleId, -1);
-  const nextId = getAdjacentPuzzleId(puzzleId, 1);
+  const prevId = getAdjacentPuzzleId(puzzleId, -1, publishedIds);
+  const nextId = getAdjacentPuzzleId(puzzleId, 1, publishedIds);
 
   return (
     <div className={appStyles.app}>

@@ -9,8 +9,10 @@ function Board({
   draggingFrom,
   editMode = false,
   onTileRemove,
+  thumbnail = false,
 }) {
   const renderMultiplier = (row, col) => {
+    if (thumbnail) return null;
     const multiplierType = getMultiplierType(row, col);
     if (!multiplierType) return null;
 
@@ -27,6 +29,7 @@ function Board({
   };
 
   const handleTilePointerDown = (e, row, col, cell) => {
+    if (thumbnail) return;
     // In edit mode, allow dragging all tiles. Otherwise, only allow dragging new tiles
     if (!editMode && !cell.isNew) {
       return;
@@ -44,7 +47,7 @@ function Board({
   };
 
   return (
-    <div className={styles.board}>
+    <div className={`${styles.board} ${thumbnail ? styles.thumbnail : ''}`}>
       <div className={styles.grid}>
         {board.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
@@ -60,7 +63,7 @@ function Board({
               draggingFrom &&
               draggingFrom[0] === rowIndex &&
               draggingFrom[1] === colIndex;
-            const isDraggable = editMode || (cell && cell.isNew);
+            const isDraggable = !thumbnail && (editMode || (cell && cell.isNew));
 
             return (
               <div

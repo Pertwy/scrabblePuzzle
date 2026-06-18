@@ -67,6 +67,7 @@ Resources:
           - GET
           - PUT
           - POST
+          - DELETE
           - OPTIONS
         AllowHeaders:
           - Content-Type
@@ -90,13 +91,24 @@ Resources:
             - ','
             - !Ref AllowedOrigins
           EDIT_API_KEY: !Ref EditApiKey
-          ALLOWED_PUZZLE_IDS: '1,2,3'
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref PuzzlesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref LeaderboardTable
       Events:
+        ListPuzzles:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles
+            Method: GET
+        CreateDraft:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles
+            Method: POST
         GetPuzzle:
           Type: HttpApi
           Properties:
@@ -109,6 +121,18 @@ Resources:
             ApiId: !Ref PuzzlesApi
             Path: /puzzles/{puzzleId}
             Method: PUT
+        DeletePuzzle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles/{puzzleId}
+            Method: DELETE
+        PublishPuzzle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PuzzlesApi
+            Path: /puzzles/{puzzleId}/publish
+            Method: POST
         GetLeaderboardHigh:
           Type: HttpApi
           Properties:

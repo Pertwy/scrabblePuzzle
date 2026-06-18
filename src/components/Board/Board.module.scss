@@ -21,6 +21,38 @@
   max-width: 100%;
 }
 
+/* ---------- Thumbnail (read-only, gallery) ---------- */
+.thumbnail {
+  display: block;
+  width: 100%;
+  padding: clamp(4px, 2cqi, 8px);
+  box-sizing: border-box;
+  box-shadow: none;
+
+  .grid {
+    width: 100%;
+    gap: 1.5px;
+  }
+
+  .cell {
+    cursor: default;
+    border-radius: 2px;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--ink-500);
+      }
+    }
+  }
+
+  .tile {
+    cursor: default;
+    border-radius: 2px;
+    box-shadow: none;
+    opacity: 1;
+  }
+}
+
 .cell {
   aspect-ratio: 1 / 1;
   width: 100%;

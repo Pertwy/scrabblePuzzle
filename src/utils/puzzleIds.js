@@ -1,26 +1,28 @@
-export const PUZZLE_IDS = ['1', '2', '3'];
-
 export const DEFAULT_PUZZLE_ID = '1';
 
-/** Parse puzzle id from URL segment; returns the string if valid, else null. */
+/** Parse puzzle id from URL segment; returns the string if it is numeric, else null. */
 export function parsePuzzleId(s) {
   if (typeof s !== 'string') return null;
-  return PUZZLE_IDS.includes(s) ? s : null;
+  return /^\d+$/.test(s) ? s : null;
 }
 
 export function isPuzzleIdAllowed(puzzleId) {
   return parsePuzzleId(puzzleId) !== null;
 }
 
-export function listPuzzleIds() {
-  return [...PUZZLE_IDS];
-}
-
-export function getAdjacentPuzzleId(puzzleId, delta) {
+/**
+ * Return the adjacent published puzzle id in the given direction.
+ * @param {string} puzzleId current puzzle id
+ * @param {number} delta -1 (previous) or +1 (next)
+ * @param {string[]} orderedIds published ids sorted ascending
+ * @returns {string | null} the neighbour id, or null at the ends
+ */
+export function getAdjacentPuzzleId(puzzleId, delta, orderedIds) {
   const parsed = parsePuzzleId(puzzleId);
-  if (!parsed) return null;
-  const index = PUZZLE_IDS.indexOf(parsed);
+  if (!parsed || !Array.isArray(orderedIds)) return null;
+  const index = orderedIds.indexOf(parsed);
+  if (index === -1) return null;
   const nextIndex = index + delta;
-  if (nextIndex < 0 || nextIndex >= PUZZLE_IDS.length) return null;
-  return PUZZLE_IDS[nextIndex];
+  if (nextIndex < 0 || nextIndex >= orderedIds.length) return null;
+  return orderedIds[nextIndex];
 }

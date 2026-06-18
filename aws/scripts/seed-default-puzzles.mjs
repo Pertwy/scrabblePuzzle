@@ -40,14 +40,19 @@ const defaultHand = [
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 for (const puzzleId of PUZZLE_IDS) {
+  const now = new Date().toISOString();
   await doc.send(
     new PutCommand({
       TableName: tableName,
       Item: {
         puzzleId,
+        number: Number(puzzleId),
+        status: 'published',
         board: emptyBoard(),
         hand: defaultHand,
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        publishedAt: now,
+        updatedAt: now,
       },
     })
   );
