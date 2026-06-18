@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import ScrabbleGame from '../components/ScrabbleGame/ScrabbleGame';
 import { usePuzzle } from '../hooks/usePuzzle';
@@ -29,6 +29,20 @@ function EditPuzzlePage() {
   const [draftId, setDraftId] = useState(
     isDraftPuzzleId(editId) ? editId : null
   );
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isInfoOpen) {
+      return undefined;
+    }
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsInfoOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isInfoOpen]);
 
   const emptyPuzzle = useMemo(() => createEmptyPuzzle(), []);
   const {
@@ -94,18 +108,51 @@ function EditPuzzlePage() {
 
   return (
     <div className={appStyles.app}>
+      <button
+        type="button"
+        className={styles.infoButton}
+        aria-label="Information"
+        aria-expanded={isInfoOpen}
+        onClick={() => setIsInfoOpen(true)}
+      >
+        i
+      </button>
+
+      {isInfoOpen && (
+        <div
+          className={styles.drawerOverlay}
+          onClick={() => setIsInfoOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`${styles.drawer} ${isInfoOpen ? styles.drawerOpen : ''}`}
+        role="dialog"
+        aria-label="Editing instructions"
+        aria-hidden={!isInfoOpen}
+      >
+        <button
+          type="button"
+          className={styles.drawerClose}
+          aria-label="Close information"
+          onClick={() => setIsInfoOpen(false)}
+        >
+          ×
+        </button>
+        <h2 className={styles.drawerTitle}>How to edit</h2>
+        <p className={styles.drawerText}>
+          Arrange the board and hand. Double-click a board tile to remove it.
+          {isDraftContext
+            ? ' Save your progress as a draft, then publish to assign the next puzzle number.'
+            : ' Saving updates the live puzzle.'}
+        </p>
+      </aside>
+
       <div className={styles.editHeader}>
         <div className={appStyles.header}>
-          <span className={appStyles.eyebrow}>Puzzle Studio</span>
           <h1>
             Edit <em>{heading}</em>
           </h1>
-          <p>
-            Arrange the board and hand. Double-click a board tile to remove it.
-            {isDraftContext
-              ? ' Save your progress as a draft, then publish to assign the next puzzle number.'
-              : ' Saving updates the live puzzle.'}
-          </p>
         </div>
         <div className={styles.toolbar}>
           <Link className={styles.playLink} to="/edit">

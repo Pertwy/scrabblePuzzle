@@ -35,7 +35,7 @@ function PlayPage() {
     <div className={appStyles.app}>
       <div className={appStyles.header}>
         <h1>
-          Scrabble <em>Best Pick</em>
+          Tile of the <em>day</em>
         </h1>
       </div>
 

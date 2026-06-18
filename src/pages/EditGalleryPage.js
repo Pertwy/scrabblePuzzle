@@ -51,7 +51,6 @@ function EditGalleryPage() {
   return (
     <div className={appStyles.app}>
       <div className={appStyles.header}>
-        <span className={appStyles.eyebrow}>Puzzle Studio</span>
         <h1>
           Edit <em>puzzles</em>
         </h1>

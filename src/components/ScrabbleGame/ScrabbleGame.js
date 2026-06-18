@@ -602,9 +602,7 @@ function ScrabbleGame({
 
   return (
     <div className={styles.gameContainer}>
-      {editMode ? (
-        <div className={styles.scoreSection}>Edit Mode</div>
-      ) : (
+      {editMode ? null : (
         <div className={styles.statusBar}>
           <div className={styles.statItem}>
             <span className={styles.statLabel}>Score</span>
