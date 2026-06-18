@@ -176,6 +176,12 @@
   margin-top: 14px;
 }
 
+/* Edit-mode action row sits above the board; add breathing room below it. */
+.editButtonGroup {
+  align-items: center;
+  margin-bottom: 24px;
+}
+
 .button {
   padding: 11px 30px;
   font-family: var(--font-sans);

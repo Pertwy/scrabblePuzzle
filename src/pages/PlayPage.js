@@ -40,7 +40,31 @@ function PlayPage() {
       </div>
 
       <div className={pageStyles.playPage}>
-        <p className={pageStyles.dateLabel}>Puzzle {puzzleId}</p>
+        <div className={pageStyles.puzzleBar}>
+          {prevId ? (
+            <Link
+              to={`/${prevId}`}
+              className={pageStyles.navButtonMobile}
+              aria-label="Previous puzzle"
+            >
+              ‹
+            </Link>
+          ) : (
+            <span className={pageStyles.navSpacer} aria-hidden="true" />
+          )}
+          <p className={pageStyles.dateLabel}>Puzzle {puzzleId}</p>
+          {nextId ? (
+            <Link
+              to={`/${nextId}`}
+              className={pageStyles.navButtonMobile}
+              aria-label="Next puzzle"
+            >
+              ›
+            </Link>
+          ) : (
+            <span className={pageStyles.navSpacer} aria-hidden="true" />
+          )}
+        </div>
 
         {loading && (
           <p className={appStyles.statusMessage}>Loading puzzle…</p>

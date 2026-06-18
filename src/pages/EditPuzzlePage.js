@@ -106,6 +106,28 @@ function EditPuzzlePage() {
       ? 'New puzzle'
       : 'Draft';
 
+  const editControls = (
+    <>
+      <Link className={styles.playLink} to="/edit">
+        Back to puzzles
+      </Link>
+      {isPublished && (
+        <Link className={styles.playLink} to={`/${editId}`}>
+          Play this puzzle
+        </Link>
+      )}
+      {isDraftContext && draftId && (
+        <button
+          type="button"
+          className={styles.select}
+          onClick={handleDiscard}
+        >
+          Discard draft
+        </button>
+      )}
+    </>
+  );
+
   return (
     <div className={appStyles.app}>
       <button
@@ -154,27 +176,11 @@ function EditPuzzlePage() {
             Edit <em>{heading}</em>
           </h1>
         </div>
-        <div className={styles.toolbar}>
-          <Link className={styles.playLink} to="/edit">
-            Back to puzzles
-          </Link>
-          {isPublished && (
-            <Link className={styles.playLink} to={`/${editId}`}>
-              Play this puzzle
-            </Link>
-          )}
-          {isDraftContext && draftId && (
-            <button
-              type="button"
-              className={styles.select}
-              onClick={handleDiscard}
-            >
-              Discard draft
-            </button>
-          )}
-        </div>
       </div>
 
+      {(loading || error) && (
+        <div className={styles.toolbar}>{editControls}</div>
+      )}
       {loading && <p className={appStyles.statusMessage}>Loading puzzle…</p>}
       {error && (
         <p className={`${appStyles.statusMessage} ${appStyles.statusError}`}>
@@ -191,6 +197,7 @@ function EditPuzzlePage() {
           onSaveSetup={handleSave}
           onPublish={isDraftContext ? handlePublish : undefined}
           saveLabel={isDraftContext ? 'Save draft' : 'Save puzzle'}
+          leadingControls={editControls}
         />
       )}
     </div>

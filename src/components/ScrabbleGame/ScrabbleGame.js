@@ -42,6 +42,7 @@ function buildSerializableSetup(board, hand) {
  * @param {(setup: { board: unknown, hand: unknown }) => void} [props.onSaveSetup] — edit mode: persist puzzle (replaces file download)
  * @param {(setup: { board: unknown, hand: unknown }) => void} [props.onPublish] — edit mode: publish the draft to the next puzzle number
  * @param {string} [props.saveLabel] — edit mode: label for the save button
+ * @param {React.ReactNode} [props.leadingControls] — edit mode: extra controls rendered inline before the save button
  * @param {string} [props.puzzleId] — play mode: puzzle id for leaderboard
  * @param {number | null} [props.highScore] — play mode: best score on this puzzle (word hidden)
  * @param {boolean} [props.highScoreLoading]
@@ -54,6 +55,7 @@ function ScrabbleGame({
   onSaveSetup,
   onPublish,
   saveLabel = 'Save puzzle',
+  leadingControls,
   puzzleId,
   highScore = null,
   highScoreLoading = false,
@@ -648,7 +650,8 @@ function ScrabbleGame({
       )}
 
       {editMode && (
-        <div className={styles.buttonGroup}>
+        <div className={`${styles.buttonGroup} ${styles.editButtonGroup}`}>
+          {leadingControls}
           <button
             type="button"
             className={`${styles.button} ${styles.save}`}
