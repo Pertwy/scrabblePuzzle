@@ -610,7 +610,7 @@ function ScrabbleGame({
             <span className={styles.statLabel}>Score</span>
             <span className={styles.statValue}>{currentScore}</span>
           </div>
-          {puzzleId && (
+          {puzzleId && mySubmission && (
             <>
               <span className={styles.statDivider} aria-hidden="true" />
               <div className={styles.statItem}>
@@ -623,27 +623,21 @@ function ScrabbleGame({
                       : '—'}
                 </span>
               </div>
-              {mySubmission && (
-                <>
-                  <span className={styles.statDivider} aria-hidden="true" />
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>You</span>
-                    <span
-                      className={`${styles.statValue} ${styles.statValueYou}`}
-                    >
-                      {mySubmission.score}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.leaderboardButton}
-                    onClick={handleViewLeaderboard}
-                    disabled={isLoadingLeaderboard}
-                  >
-                    {isLoadingLeaderboard ? 'Loading…' : 'Leaderboard'}
-                  </button>
-                </>
-              )}
+              <span className={styles.statDivider} aria-hidden="true" />
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>You</span>
+                <span className={`${styles.statValue} ${styles.statValueYou}`}>
+                  {mySubmission.score}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.leaderboardButton}
+                onClick={handleViewLeaderboard}
+                disabled={isLoadingLeaderboard}
+              >
+                {isLoadingLeaderboard ? 'Loading…' : 'Leaderboard'}
+              </button>
             </>
           )}
         </div>
